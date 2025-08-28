@@ -15,15 +15,17 @@ import {z} from 'genkit';
 const DiseasePredictionInputSchema = z.object({
   genomicDataUri: z
     .string()
+    .optional()
     .describe(
       "Genomic data of the patient, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   imagingDataUri: z
     .string()
+    .optional()
     .describe(
       "Imaging data of the patient (e.g., MRI), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  patientHistory: z.string().describe('Relevant patient history and symptoms.'),
+  patientHistory: z.string().describe('Relevant patient history and symptoms, or manual EHR data.'),
 });
 export type DiseasePredictionInput = z.infer<typeof DiseasePredictionInputSchema>;
 
@@ -65,9 +67,11 @@ const prompt = ai.definePrompt({
   Provide a list of potential diseases, their probabilities, and supporting factors from the provided data.
   Also suggest tests to perform in order to confirm the diagnoses.
 
-  Genomic Data: {{media url=genomicDataUri}}
-  Imaging Data: {{media url=imagingDataUri}}
-  Patient History: {{{patientHistory}}}
+  {{#if genomicDataUri}}Genomic Data: {{media url=genomicDataUri}}{{/if}}
+  {{#if imagingDataUri}}Imaging Data: {{media url=imagingDataUri}}{{/if}}
+  Patient History / EHR: {{{patientHistory}}}
+
+  If genomic or imaging data are not provided, base your analysis on the patient history and EHR data. Acknowledge that the confidence will be lower due to the missing data.
 
   Format the output as a JSON object conforming to the DiseasePredictionOutputSchema schema.
   Set the confidenceLevel based on the quality and completeness of the provided data.
@@ -85,4 +89,3 @@ const diseasePredictionFlow = ai.defineFlow(
     return output!;
   }
 );
-
