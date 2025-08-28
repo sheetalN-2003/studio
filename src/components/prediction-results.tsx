@@ -48,7 +48,11 @@ export function PredictionResults({ result, patientData, onReset }: PredictionRe
     if (printWindow) {
       const reportHtml = document.getElementById('printable-report')?.innerHTML;
       if(reportHtml){
+        printWindow.document.write('<html><head><title>Prediction Report</title>');
+        // You can add styles here if needed for the print view
+        printWindow.document.write('</head><body>');
         printWindow.document.write(reportHtml);
+        printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
@@ -134,11 +138,21 @@ export function PredictionResults({ result, patientData, onReset }: PredictionRe
         ))}
       </div>
       
+      {isShapLoading && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <h3 className="mt-4 text-lg font-semibold">Running SHAP Analysis...</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+            Calculating feature contributions for {selectedDiseaseForShap}.
+            </p>
+        </div>
+      )}
+
       {shapResult && selectedDiseaseForShap && (
         <Card>
           <CardHeader>
-            <CardTitle>SHAP Analysis for: {selectedDiseaseForShap}</CardTitle>
-            <CardDescription>Exploring the factors contributing to the prediction.</CardDescription>
+            <CardTitle>Feature Importance for: {selectedDiseaseForShap}</CardTitle>
+            <CardDescription>This SHAP analysis shows which factors contributed to the prediction and by how much. Positive values increase the prediction likelihood, while negative values decrease it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">{shapResult.explanation}</p>
