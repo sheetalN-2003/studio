@@ -7,44 +7,48 @@ import * as z from "zod";
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Wand2, Lightbulb } from "lucide-react";
-import { datasetClassification, type DatasetClassificationOutput } from "@/ai/flows/dataset-classification";
+import { Loader2, Wand2, Lightbulb, Upload } from "lucide-react";
+import { classifyDatasetFromFile, type ClassifyDatasetFromFileOutput } from "@/ai/flows/classify-dataset-from-file";
+import { fileToDataUri } from "@/lib/file-utils";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-  sampleRecords: z.string().min(100, "Please provide at least 100 characters of sample records."),
-  newDatasetDescription: z.string().min(50, "Please provide at least 50 characters for the dataset description."),
+  datasetFile: z.any().refine(file => file?.length == 1, "A dataset file (CSV or Excel) is required."),
 });
 
 
 export default function ClassifyPage() {
     const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<DatasetClassificationOutput | null>(null);
+    const [result, setResult] = useState<ClassifyDatasetFromFileOutput | null>(null);
     const { toast } = useToast();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            sampleRecords: "",
-            newDatasetDescription: "",
-        },
     });
+    
+    const fileRef = form.register("datasetFile");
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         setResult(null);
         try {
-            const classificationResult = await datasetClassification(values);
+            const file = values.datasetFile[0];
+            const dataUri = await fileToDataUri(file);
+
+            const classificationResult = await classifyDatasetFromFile({
+                datasetDataUri: dataUri,
+                fileName: file.name,
+            });
             setResult(classificationResult);
         } catch (error) {
             console.error("Dataset classification failed:", error);
             toast({
                 variant: "destructive",
                 title: "Classification Failed",
-                description: "An error occurred while suggesting classes. Please try again.",
+                description: "An error occurred while suggesting classes. Please ensure the file is a valid CSV or Excel file.",
             });
         } finally {
             setIsLoading(false);
@@ -55,9 +59,9 @@ export default function ClassifyPage() {
     <MainLayout pageTitle="Dataset Auto-Classification">
         <Card>
             <CardHeader>
-                <CardTitle>Suggest Dataset Classes</CardTitle>
+                <CardTitle>Suggest Dataset Classes from File</CardTitle>
                 <CardDescription>
-                    Provide sample records and a description of a new dataset to get AI-powered class suggestions. This helps in organizing and preparing data for federated learning without revealing sensitive information.
+                    Upload a CSV or Excel file containing patient data to get AI-powered class suggestions. This helps in organizing and preparing data for federated learning.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -65,40 +69,16 @@ export default function ClassifyPage() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <FormField
                             control={form.control}
-                            name="sampleRecords"
+                            name="datasetFile"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Sample Patient Records</FormLabel>
+                                    <FormLabel>Dataset File</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder="Paste a small, anonymized set of sample records with known classifications. e.g., 'Record 1: { ... clinical data ... }, Class: Fabry Disease; Record 2: { ... }'"
-                                            className="min-h-[200px]"
-                                            {...field}
-                                        />
+                                        <div className="relative">
+                                            <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                            <Input type="file" className="pl-10" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" {...fileRef} />
+                                        </div>
                                     </FormControl>
-                                    <FormDescription>
-                                        Provide a few examples from a similar, already classified dataset.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="newDatasetDescription"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>New Dataset Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="Describe the new, unclassified dataset. e.g., 'This dataset contains genomic and proteomic data from 500 pediatric patients suspected of metabolic disorders.'"
-                                            className="min-h-[100px]"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Describe the nature, source, and contents of the new dataset.
-                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -117,25 +97,33 @@ export default function ClassifyPage() {
                 {isLoading && (
                      <div className="mt-12 flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
                         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        <h3 className="mt-4 text-lg font-semibold">Analyzing Datasets</h3>
+                        <h3 className="mt-4 text-lg font-semibold">Analyzing Dataset</h3>
                         <p className="mt-2 text-sm text-muted-foreground">
-                        The AI is comparing the data structures to suggest relevant classes.
+                        The AI is analyzing the file contents to suggest relevant classes.
                         </p>
                     </div>
                 )}
                 
                 {result && (
-                    <div className="mt-12">
-                        <h3 className="text-lg font-semibold flex items-center mb-4">
-                           <Lightbulb className="h-5 w-5 mr-2 text-primary"/>
-                           Suggested Classes
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {result.suggestedClasses.map((label, index) => (
-                                <Badge key={index} variant="secondary" className="text-base px-4 py-2">
-                                    {label}
-                                </Badge>
-                            ))}
+                    <div className="mt-12 space-y-6">
+                        <div>
+                            <h3 className="text-lg font-semibold flex items-center mb-4">
+                               <Lightbulb className="h-5 w-5 mr-2 text-primary"/>
+                               Suggested Classes
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {result.suggestedClasses.map((label, index) => (
+                                    <Badge key={index} variant="secondary" className="text-base px-4 py-2">
+                                        {label}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                         <div>
+                            <h3 className="text-lg font-semibold flex items-center mb-2">
+                               Analysis Summary
+                            </h3>
+                            <p className="text-sm text-muted-foreground">{result.analysisSummary}</p>
                         </div>
                     </div>
                 )}
