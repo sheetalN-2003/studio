@@ -22,13 +22,15 @@ import { diseasePrediction, type DiseasePredictionOutput } from "@/ai/flows/dise
 import { fileToDataUri } from "@/lib/file-utils";
 import { PredictionResults } from "./prediction-results";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const formSchema = z.object({
   patientName: z.string().optional(),
   patientId: z.string().optional(),
   patientAge: z.coerce.number().positive().optional(),
-  patientHistory: z.string().min(50, {
+  patientHistory: z.string().min(1, {
+    message: "Patient history cannot be empty.",
+  }).min(50, {
     message: "Patient history must be at least 50 characters.",
   }),
   genomicData: z.any().optional(),
@@ -38,10 +40,18 @@ const formSchema = z.object({
     const hasHistory = data.patientHistory.length >= 50;
     return hasFiles || hasHistory;
 }, {
-    message: "Please either upload at least one data file, or provide a detailed patient history.",
+    message: "Please either upload at least one data file, or provide a detailed patient history of at least 50 characters.",
     path: ["patientHistory"],
 });
 
+const defaultFormValues = {
+    patientHistory: "",
+    patientName: "",
+    patientId: "",
+    patientAge: undefined,
+    genomicData: undefined,
+    imagingData: undefined,
+};
 
 export function PredictionForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -53,16 +63,17 @@ export function PredictionForm() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      patientHistory: "",
-      patientName: "",
-      patientId: "",
-      patientAge: undefined,
-    },
+    defaultValues: defaultFormValues,
   });
   
   const genomicFileRef = form.register("genomicData");
   const imagingFileRef = form.register("imagingData");
+
+  const handleReset = () => {
+      setResult(null);
+      setPatientDataForShap(null);
+      form.reset(defaultFormValues);
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -91,7 +102,7 @@ export function PredictionForm() {
 
       const history = `
         Patient Name: ${values.patientName || 'N/A'}
-        Patient ID: ${values.patientId || 'N/A'}
+        Patient ID: ${values.patientId || 'N_A'}
         Patient Age: ${values.patientAge || 'N/A'}
 
         Clinical History & Symptoms:
@@ -133,7 +144,7 @@ export function PredictionForm() {
   }
 
   if (result) {
-    return <PredictionResults result={result} patientData={patientDataForShap} onReset={() => { setResult(null); form.reset(); }} />;
+    return <PredictionResults result={result} patientData={patientDataForShap} onReset={handleReset} />;
   }
 
   return (
@@ -142,10 +153,10 @@ export function PredictionForm() {
             <Tabs onValueChange={setActiveTab} value={activeTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="files">
-                        <Upload className="mr-2" /> Multi-Modal Files
+                        <Upload className="mr-2 h-4 w-4" /> Multi-Modal Files
                     </TabsTrigger>
                     <TabsTrigger value="manual">
-                        <FileText className="mr-2" /> Manual EHR Input
+                        <FileText className="mr-2 h-4 w-4" /> Manual EHR Input
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="files">
@@ -221,7 +232,7 @@ export function PredictionForm() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Age</FormLabel>
-                                            <FormControl><Input type="number" placeholder="42" {...field} onChange={event => field.onChange(+event.target.value)} /></FormControl>
+                                            <FormControl><Input type="number" placeholder="42" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -286,7 +297,7 @@ export function PredictionForm() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Age</FormLabel>
-                                        <FormControl><Input type="number" placeholder="42" {...field} onChange={event => field.onChange(+event.target.value)}/></FormControl>
+                                        <FormControl><Input type="number" placeholder="42" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -325,3 +336,5 @@ export function PredictionForm() {
     </Form>
   );
 }
+
+    
