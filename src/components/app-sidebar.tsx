@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
+  AreaChart,
   FolderKanban, 
   LayoutDashboard, 
   Settings, 
@@ -25,6 +26,7 @@ const menuItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/predict', label: 'Disease Prediction', icon: Stethoscope },
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban },
+  { href: '/analytics', label: 'Analytics', icon: AreaChart },
 ];
 
 export function AppSidebar() {
