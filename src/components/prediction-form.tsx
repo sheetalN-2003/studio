@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -24,19 +25,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "./ui/card";
 
 const formSchema = z.object({
+  patientName: z.string().optional(),
+  patientId: z.string().optional(),
+  patientAge: z.coerce.number().positive().optional(),
   patientHistory: z.string().min(50, {
     message: "Patient history must be at least 50 characters.",
   }),
   genomicData: z.any().optional(),
   imagingData: z.any().optional(),
 }).refine(data => {
-    const hasFiles = data.genomicData?.length > 0 && data.imagingData?.length > 0;
+    const hasFiles = data.genomicData?.length > 0 || data.imagingData?.length > 0;
     const hasHistory = data.patientHistory.length >= 50;
-    // We need either both files or a sufficient patient history
     return hasFiles || hasHistory;
 }, {
-    message: "Please either upload both genomic and imaging data files, or provide a detailed patient history.",
-    path: ["patientHistory"], // You can decide where to show this error
+    message: "Please either upload at least one data file, or provide a detailed patient history.",
+    path: ["patientHistory"],
 });
 
 
@@ -52,6 +55,8 @@ export function PredictionForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       patientHistory: "",
+      patientName: "",
+      patientId: "",
     },
   });
   
@@ -65,24 +70,37 @@ export function PredictionForm() {
     
     try {
         let genomicDataUri, imagingDataUri;
-        const patientData: any = { patientHistory: values.patientHistory };
+        const patientData: any = { 
+          patientHistory: values.patientHistory,
+          patientName: values.patientName,
+          patientId: values.patientId,
+          patientAge: values.patientAge,
+        };
 
-        if (activeTab === "files" && values.genomicData?.[0] && values.imagingData?.[0]) {
+        if (values.genomicData?.[0]) {
             const genomicDataFile = values.genomicData[0];
-            const imagingDataFile = values.imagingData[0];
-
-            [genomicDataUri, imagingDataUri] = await Promise.all([
-                fileToDataUri(genomicDataFile),
-                fileToDataUri(imagingDataFile),
-            ]);
+            genomicDataUri = await fileToDataUri(genomicDataFile);
             patientData.genomicDataFileName = genomicDataFile.name;
+        }
+        if (values.imagingData?.[0]) {
+            const imagingDataFile = values.imagingData[0];
+            imagingDataUri = await fileToDataUri(imagingDataFile);
             patientData.imagingDataFileName = imagingDataFile.name;
         }
+
+      const history = `
+        Patient Name: ${values.patientName || 'N/A'}
+        Patient ID: ${values.patientId || 'N/A'}
+        Patient Age: ${values.patientAge || 'N/A'}
+
+        Clinical History & Symptoms:
+        ${values.patientHistory}
+      `;
       
       const input = {
           genomicDataUri,
           imagingDataUri,
-          patientHistory: values.patientHistory,
+          patientHistory: history,
       };
 
       const predictionResult = await diseasePrediction(input);
@@ -133,7 +151,7 @@ export function PredictionForm() {
                     <Card>
                         <CardContent className="pt-6">
                             <div className="space-y-4">
-                               <p className="text-sm text-muted-foreground">Upload both genomic and imaging data for the highest accuracy predictions.</p>
+                               <p className="text-sm text-muted-foreground">Upload genomic and/or imaging data for the highest accuracy predictions.</p>
                                 <FormField
                                 control={form.control}
                                 name="genomicData"
@@ -173,9 +191,42 @@ export function PredictionForm() {
                 <TabsContent value="manual">
                      <Card>
                         <CardContent className="pt-6">
-                           <p className="text-sm text-muted-foreground mb-4">
-                                If you don&apos;t have data files, provide a detailed patient summary. The model will base its prediction solely on this information.
-                            </p>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <FormField
+                                    control={form.control}
+                                    name="patientName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Patient Name</FormLabel>
+                                            <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="patientId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Patient ID</FormLabel>
+                                            <FormControl><Input placeholder="HSP-12345" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="patientAge"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Age</FormLabel>
+                                            <FormControl><Input type="number" placeholder="42" {...field} onChange={event => field.onChange(+event.target.value)} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                           </div>
+                           
                            <FormField
                             control={form.control}
                             name="patientHistory"
@@ -197,26 +248,71 @@ export function PredictionForm() {
                     </Card>
                 </TabsContent>
             </Tabs>
-
-            <FormField
-            control={form.control}
-            name="patientHistory"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>
-                    Additional Notes & Patient History {activeTab === "files" ? "(Optional but Recommended)" : ""}
-                </FormLabel>
-                <FormControl>
-                    <Textarea
-                    placeholder="Provide a detailed summary of the patient's clinical history, symptoms, and any previous findings..."
-                    className="min-h-[150px]"
-                    {...field}
-                    />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
+            
+            {activeTab === 'files' && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Patient Information</CardTitle>
+                        <CardDescription>This information will be included with the analysis.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="patientName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Patient Name</FormLabel>
+                                        <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                                <FormField
+                                control={form.control}
+                                name="patientId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Patient ID</FormLabel>
+                                        <FormControl><Input placeholder="HSP-12345" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="patientAge"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Age</FormLabel>
+                                        <FormControl><Input type="number" placeholder="42" {...field} onChange={event => field.onChange(+event.target.value)}/></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <FormField
+                            control={form.control}
+                            name="patientHistory"
+                            render={({ field }) => (
+                                <FormItem className="mt-4">
+                                <FormLabel>
+                                    Additional Notes & Patient History
+                                </FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                    placeholder="Provide a detailed summary of the patient's clinical history, symptoms, and any previous findings..."
+                                    className="min-h-[150px]"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
             )}
-            />
             
             <Button type="submit" disabled={isLoading} size="lg">
             {isLoading ? (

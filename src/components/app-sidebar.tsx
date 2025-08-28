@@ -1,3 +1,4 @@
+
 "use client"
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -9,6 +10,7 @@ import {
   MessageCircle, 
   Settings, 
   Stethoscope,
+  Shield,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -39,6 +41,7 @@ const menuItems = [
   { href: '/predict', label: 'Disease Prediction', icon: Stethoscope },
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban },
   { href: '/analytics', label: 'Analytics', icon: AreaChart },
+  { href: '/admin', label: 'Admin', icon: Shield },
 ];
 
 export function AppSidebar() {
