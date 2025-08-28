@@ -22,7 +22,7 @@ import { diseasePrediction, type DiseasePredictionOutput } from "@/ai/flows/dise
 import { fileToDataUri } from "@/lib/file-utils";
 import { PredictionResults } from "./prediction-results";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 
 const formSchema = z.object({
   patientName: z.string().optional(),
