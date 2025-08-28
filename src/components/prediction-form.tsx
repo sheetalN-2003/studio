@@ -57,6 +57,7 @@ export function PredictionForm() {
       patientHistory: "",
       patientName: "",
       patientId: "",
+      patientAge: undefined,
     },
   });
   
