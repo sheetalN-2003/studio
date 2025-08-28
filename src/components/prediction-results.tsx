@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BrainCircuit, Dna, FlaskConical, Loader2, FileInput, BarChart, RotateCcw } from 'lucide-react';
+import { BrainCircuit, Dna, FlaskConical, Loader2, FileInput, BarChart, RotateCcw, Download } from 'lucide-react';
 import { ShapPlot } from './shap-plot';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { PrintableReport } from './printable-report';
 
 interface PredictionResultsProps {
   result: DiseasePredictionOutput;
@@ -41,6 +42,19 @@ export function PredictionResults({ result, patientData, onReset }: PredictionRe
       setIsShapLoading(false);
     }
   };
+  
+  const handlePrint = () => {
+    const printWindow = window.open('', '', 'height=800,width=800');
+    if (printWindow) {
+      const reportHtml = document.getElementById('printable-report')?.innerHTML;
+      if(reportHtml){
+        printWindow.document.write(reportHtml);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+    }
+  };
 
   const getConfidenceBadgeClass = (level: string) => {
     switch (level.toLowerCase()) {
@@ -57,15 +71,24 @@ export function PredictionResults({ result, patientData, onReset }: PredictionRe
 
   return (
     <div className="space-y-8">
-      <div className='flex justify-between items-start'>
+       <div style={{ display: 'none' }}>
+        <PrintableReport id="printable-report" result={result} patientData={patientData} />
+      </div>
+      <div className='flex justify-between items-start gap-4'>
         <div>
           <h2 className="text-2xl font-bold">Analysis Complete</h2>
           <p className="text-muted-foreground">The AI model has generated the following predictions.</p>
         </div>
-        <Button onClick={onReset} variant="outline">
-          <RotateCcw className="mr-2 h-4 w-4" />
-          New Analysis
-        </Button>
+        <div className="flex gap-2 flex-shrink-0">
+          <Button onClick={onReset} variant="outline">
+            <RotateCcw className="mr-2 h-4 w-4" />
+            New Analysis
+          </Button>
+           <Button onClick={handlePrint}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
       </div>
 
       <Alert>
