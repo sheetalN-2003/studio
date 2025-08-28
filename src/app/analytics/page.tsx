@@ -1,7 +1,45 @@
 
+"use client"
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, LineChart, PieChart, Users, TestTube, FileText, Activity } from 'lucide-react';
+import { Users, TestTube, FileText, Activity } from 'lucide-react';
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+
+
+const lineChartData = [
+  { date: "2024-05-01", predictions: 35 },
+  { date: "2024-05-02", predictions: 42 },
+  { date: "2024-05-03", predictions: 55 },
+  { date: "2024-05-04", predictions: 48 },
+  { date: "2024-05-05", predictions: 62 },
+  { date: "2024-05-06", predictions: 75 },
+  { date: "2024-05-07", predictions: 68 },
+];
+
+const pieChartData = [
+  { name: "Fabry Disease", value: 400 },
+  { name: "Wilson's Disease", value: 300 },
+  { name: "Gaucher Disease", value: 300 },
+  { name: "Cystic Fibrosis", value: 200 },
+  { name: "Pompe Disease", value: 278 },
+  { name: "Other", value: 189 },
+];
+
+const lineChartConfig = {
+  predictions: {
+    label: "Predictions",
+    color: "hsl(var(--chart-1))",
+  },
+}
+
+const pieChartConfig = {
+  diseases: {
+    label: "Diseases",
+  },
+}
+
+const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "#A0A0A0"];
 
 export default function AnalyticsPage() {
   return (
@@ -69,10 +107,17 @@ export default function AnalyticsPage() {
               <CardDescription>Monitor the daily and weekly prediction analysis volume.</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
-              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                <LineChart className="h-16 w-16" />
-                <p>Line chart showing prediction trends coming soon.</p>
-              </div>
+               <ChartContainer config={lineChartConfig} className="w-full h-full">
+                <ResponsiveContainer>
+                  <BarChart data={lineChartData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} />
+                    <YAxis />
+                    <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                    <Bar dataKey="predictions" fill="var(--color-predictions)" radius={4} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
           <Card>
@@ -81,10 +126,30 @@ export default function AnalyticsPage() {
               <CardDescription>Most frequently predicted diseases across all analyses.</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
-               <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                <PieChart className="h-16 w-16" />
-                <p>Pie chart showing disease distribution coming soon.</p>
-              </div>
+              <ChartContainer config={pieChartConfig} className="w-full h-full">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Tooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                    <Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (percent > 0.05) ? (
+                          <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                            {`${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        ) : null;
+                      }}
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </div>
