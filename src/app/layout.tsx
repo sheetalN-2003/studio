@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'RareFind AI',
+  title: 'GenoSym-AI',
   description: 'AI-powered rare disease prediction using multi-modal data for hospital use.',
 };
 

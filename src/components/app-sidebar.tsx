@@ -35,7 +35,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Logo className="size-8" />
-          <span className="text-lg font-semibold text-sidebar-foreground">RareFind AI</span>
+          <span className="text-lg font-semibold text-sidebar-foreground">GenoSym-AI</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

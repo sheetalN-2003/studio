@@ -11,7 +11,7 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinejoin="round"
     {...props}
   >
-    <title>RareFind AI Logo</title>
+    <title>GenoSym-AI Logo</title>
     <path d="M4 14.899A7 7 0 1 1 15 9.1" />
     <path d="M15 9.1A7 7 0 1 0 4 14.899" />
     <path d="M12 12h.01" />
