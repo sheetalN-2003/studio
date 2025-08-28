@@ -5,6 +5,7 @@
  * - login - A function that handles user login.
  * - signup - A function that handles user signup.
  * - forgotPassword - A function that handles password reset requests.
+ * - logout - A function that handles user logout.
  */
 
 import { ai } from '@/ai/genkit';
@@ -46,6 +47,10 @@ export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<
 
 export async function forgotPassword(input: z.infer<typeof ForgotPasswordInputSchema>): Promise<AuthOutput> {
     return forgotPasswordFlow(input);
+}
+
+export async function logout(): Promise<Omit<AuthOutput, 'userId'>> {
+    return logoutFlow();
 }
 
 // Mock database of users
@@ -123,5 +128,18 @@ const forgotPasswordFlow = ai.defineFlow(
         }
         
         return { success: true, message: "If a user with that email exists, a reset link has been sent." };
+    }
+);
+
+// Logout Flow
+const logoutFlow = ai.defineFlow(
+    {
+        name: 'logoutFlow',
+        outputSchema: z.object({ success: z.boolean(), message: z.string() }),
+    },
+    async () => {
+        console.log('Logout attempt');
+        // This is a mock implementation. In a real app, you'd invalidate a session/token.
+        return { success: true, message: 'Logout successful' };
     }
 );
