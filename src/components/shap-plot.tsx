@@ -1,54 +1,12 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LabelList,
-  Cell,
-} from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface ShapPlotProps {
   features: string[];
   values: number[][];
 }
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const value = payload[0].value;
-    const contribution = value > 0 ? 'Increases Likelihood' : 'Decreases Likelihood';
-    return (
-      <div className="rounded-lg border bg-background p-2 shadow-sm">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex flex-col space-y-1">
-            <span className="text-[0.70rem] uppercase text-muted-foreground">
-              Feature
-            </span>
-            <span className="font-bold text-muted-foreground">{label}</span>
-          </div>
-          <div className="flex flex-col space-y-1">
-            <span className="text-[0.70rem] uppercase text-muted-foreground">
-              SHAP Value
-            </span>
-            <span className={`font-bold ${value > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {value.toFixed(4)}
-            </span>
-          </div>
-        </div>
-         <div className="text-center text-xs pt-1 text-muted-foreground">{contribution}</div>
-      </div>
-    );
-  }
-
-  return null;
-};
-
 
 export function ShapPlot({ features, values }: ShapPlotProps) {
   if (!features || !values || values.length === 0) {
@@ -59,38 +17,38 @@ export function ShapPlot({ features, values }: ShapPlotProps) {
     name: feature,
     contribution: values[0][index] || 0,
   })).sort((a,b) => Math.abs(b.contribution) - Math.abs(a.contribution));
-  
-  const chartConfig = {
-    contribution: {
-      label: "Contribution",
-    },
-  };
+
+  const maxContribution = Math.max(...data.map(item => Math.abs(item.contribution)));
 
   return (
-    <ChartContainer config={chartConfig} className="h-full w-full">
-      <ResponsiveContainer>
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{
-            top: 5,
-            right: 50,
-            left: 50,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-          <XAxis type="number" domain={['dataMin', 'dataMax']} />
-          <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} interval={0}/>
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--accent))' }} />
-          <Bar dataKey="contribution" name="SHAP Value" barSize={20}>
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.contribution > 0 ? "hsl(var(--primary))" : "hsl(var(--destructive))"} />
-            ))}
-             <LabelList dataKey="contribution" position="right" formatter={(value: number) => value.toFixed(3)} className="fill-muted-foreground font-medium" />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+    <div className="space-y-4 pt-4">
+      <div className="flex text-xs text-muted-foreground">
+        <div className="w-1/3 pr-4">Feature</div>
+        <div className="w-2/3">Contribution (Negative vs. Positive)</div>
+      </div>
+      {data.map((item, index) => {
+          const isPositive = item.contribution >= 0;
+          const barPercentage = (Math.abs(item.contribution) / maxContribution) * 100;
+        return (
+          <div key={index} className="flex items-center">
+             <div className="w-1/3 pr-4 text-sm font-medium truncate" title={item.name}>{item.name}</div>
+             <div className="w-2/3 flex items-center gap-2">
+                <div className="w-full bg-destructive/20 rounded-full h-3">
+                    <Progress
+                    value={isPositive ? barPercentage : 0}
+                    className="h-3 [&>div]:bg-primary"
+                    />
+                </div>
+                 <span className={cn(
+                    "text-sm font-semibold w-16 text-right",
+                    isPositive ? "text-primary" : "text-destructive"
+                 )}>
+                    {item.contribution.toFixed(3)}
+                </span>
+             </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
