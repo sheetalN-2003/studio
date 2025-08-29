@@ -80,9 +80,7 @@ export default function DashboardPage() {
               Breakdown of predictions in the last 7 days.
             </CardDescription>
           </CardHeader>
-          <CardContent>
             <DashboardStats />
-          </CardContent>
         </Card>
       </div>
     </MainLayout>
