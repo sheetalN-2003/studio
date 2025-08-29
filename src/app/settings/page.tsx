@@ -1,6 +1,6 @@
-
 "use client";
 
+import React from "react";
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,17 +30,16 @@ export default function SettingsPage() {
   const handleSaveChanges = () => {
     if (!user) return;
     setIsSaving(true);
-    // In a real app, you would call an API to save the changes.
-    // Here we'll just update the context and localStorage.
+    // In a real app, call an API here. We simulate it.
     setTimeout(() => {
-        const updatedUser = { ...user, name, specialty };
-        updateUser(updatedUser);
-        setIsSaving(false);
-        toast({
+      const updatedUser = { ...user, name, specialty };
+      updateUser(updatedUser);
+      setIsSaving(false);
+      toast({
         title: 'Profile Updated',
         description: 'Your changes have been saved successfully.',
-        });
-    }, 500); // Simulate network delay
+      });
+    }, 500);
   };
 
   return (
@@ -64,49 +63,55 @@ export default function SettingsPage() {
                 </Avatar>
                 <Button variant="outline">Change Picture</Button>
               </div>
+
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" value={user.email} type="email" readOnly />
                 </div>
-                 <div className="space-y-2">
+
+                <div className="space-y-2">
                   <Label htmlFor="hospital">Hospital</Label>
                   <Input id="hospital" value={user.hospitalName} readOnly />
                 </div>
-                 <div className="space-y-2">
+
+                <div className="space-y-2">
                   <Label htmlFor="specialty">Specialty</Label>
                   <Input id="specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
                 </div>
               </div>
             </CardContent>
+
             <CardContent>
               <Button onClick={handleSaveChanges} disabled={isSaving}>
-                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Changes
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
               </Button>
             </CardContent>
           </Card>
-          
+
           <Card>
-              <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                  <CardDescription>Manage your account preferences and security.</CardDescription>
-              </Header>
-              <CardContent className="space-y-4">
-                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                          <Label>Change Password</Label>
-                          <p className="text-xs text-muted-foreground">
-                              For security, you will be logged out after changing your password.
-                          </p>
-                      </div>
-                      <Button variant="outline">Change Password</Button>
-                  </div>
-              </CardContent>
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+              <CardDescription>Manage your account preferences and security.</CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label>Change Password</Label>
+                  <p className="text-xs text-muted-foreground">
+                    For security, you will be logged out after changing your password.
+                  </p>
+                </div>
+                <Button variant="outline">Change Password</Button>
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}
