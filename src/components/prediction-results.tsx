@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from 'react';
-import { type DiseasePredictionOutput, type DiseasePredictionInput } from '@/ai/flows/disease-prediction';
+import { type DiseasePredictionOutput } from '@/ai/flows/disease-prediction';
 import { type ShapAnalysisInput, type ShapAnalysisOutput, shapAnalysis } from '@/ai/flows/shap-analysis';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { BrainCircuit, Dna, FlaskConical, Loader2, FileInput, BarChart, RotateCcw, Download } from 'lucide-react';
+import { BrainCircuit, FlaskConical, Loader2, BarChart, RotateCcw, Download } from 'lucide-react';
 import { ShapPlot } from './shap-plot';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { PrintableReport } from './printable-report';
@@ -49,13 +48,17 @@ export function PredictionResults({ result, patientData, onReset }: PredictionRe
       const reportHtml = document.getElementById('printable-report')?.innerHTML;
       if(reportHtml){
         printWindow.document.write('<html><head><title>Prediction Report</title>');
-        // You can add styles here if needed for the print view
+        // The styles are injected via a style tag in the PrintableReport component itself
+        printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">');
         printWindow.document.write('</head><body>');
         printWindow.document.write(reportHtml);
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.focus();
-        printWindow.print();
+        
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
       }
     }
   };
@@ -75,7 +78,7 @@ export function PredictionResults({ result, patientData, onReset }: PredictionRe
 
   return (
     <div className="space-y-8">
-       <div style={{ display: 'none' }}>
+       <div className="hidden print:block">
         <PrintableReport id="printable-report" result={result} patientData={patientData} />
       </div>
       <div className='flex justify-between items-start gap-4'>

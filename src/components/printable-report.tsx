@@ -28,7 +28,7 @@ export function PrintableReport({ id, result, patientData }: PrintableReportProp
       <style>{`
         @media print {
           @page { size: A4; margin: 1.5cm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: 'Inter', sans-serif; }
         }
         .report-container { font-family: 'Inter', sans-serif; color: #111827; line-height: 1.6; }
         .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 1rem; }
@@ -37,14 +37,17 @@ export function PrintableReport({ id, result, patientData }: PrintableReportProp
         .section { margin-top: 2rem; }
         .section-title { font-size: 1.5rem; font-weight: 600; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem; margin-bottom: 1rem; color: #2E3192; }
         .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
-        .card { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; background-color: #ffffff; }
+        .card { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; background-color: #ffffff; page-break-inside: avoid; }
         .card-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
         .card-probability { font-size: 1.125rem; font-weight: 700; color: #2E3192; }
         .card-factors-title { font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; }
         .card-factors { font-size: 0.875rem; color: #4b5563; }
-        .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb; }
+        .summary-card { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem 1.5rem; background-color: #ffffff; }
+        .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+        .summary-item:last-child { border-bottom: none; padding-bottom: 0.5rem; }
+        .summary-item:first-child { padding-top: 0.5rem; }
         .summary-label { font-weight: 500; }
-        .summary-value { font-weight: 600; }
+        .summary-value { font-weight: 600; text-align: right; }
         .confidence-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; color: white; font-weight: 600; }
         .disclaimer { margin-top: 2.5rem; font-size: 0.75rem; color: #6b7280; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 1rem; }
       `}</style>
@@ -56,10 +59,18 @@ export function PrintableReport({ id, result, patientData }: PrintableReportProp
 
         <div className="section">
           <h2 className="section-title">Analysis Summary</h2>
-          <div className="card">
+          <div className="summary-card">
             <div className="summary-item">
-              <span className="summary-label">Patient Identifier:</span>
-              <span className="summary-value">{patientData.genomicDataFileName ? 'Data Files' : 'Manual Entry'}</span>
+              <span className="summary-label">Patient Name:</span>
+              <span className="summary-value">{patientData?.patientName || 'N/A'}</span>
+            </div>
+             <div className="summary-item">
+              <span className="summary-label">Patient ID:</span>
+              <span className="summary-value">{patientData?.patientId || 'N/A'}</span>
+            </div>
+             <div className="summary-item">
+              <span className="summary-label">Patient Age:</span>
+              <span className="summary-value">{patientData?.patientAge || 'N/A'}</span>
             </div>
             <div className="summary-item">
               <span className="summary-label">Analysis Date:</span>
@@ -73,7 +84,7 @@ export function PrintableReport({ id, result, patientData }: PrintableReportProp
                 </span>
               </span>
             </div>
-            <div className="summary-item" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+            <div className="summary-item">
               <span className="summary-label">Suggested Follow-up Tests:</span>
               <span className="summary-value">{result.suggestedTests}</span>
             </div>
