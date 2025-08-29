@@ -10,7 +10,6 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 export const metadata: Metadata = {
   title: 'GenoSym-AI',
   description: 'AI-powered rare disease prediction using multi-modal data for hospital use.',
-  manifest: '/manifest.webmanifest',
 };
 
 export default function RootLayout({
