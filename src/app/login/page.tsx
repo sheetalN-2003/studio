@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { login } from "@/ai/flows/user-auth-flow";
+import { useAuth } from "@/context/auth-context";
 
 
 const formSchema = z.object({
@@ -38,6 +39,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { login: authLogin } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,10 +53,11 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const result = await login(values);
-      if (result.success) {
+      if (result.success && result.user) {
+        authLogin(result.user);
         toast({
           title: "Login Successful",
-          description: "Welcome back!",
+          description: `Welcome back, ${result.user.name}!`,
         });
         router.push("/");
       } else {

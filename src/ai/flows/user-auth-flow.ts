@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 // Schemas for Input
 const LoginInputSchema = z.object({
@@ -31,7 +31,15 @@ const ForgotPasswordInputSchema = z.object({
 const AuthOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
-  userId: z.string().optional(),
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    role: z.string(),
+    specialty: z.string().optional(),
+    hospitalName: z.string(),
+    avatar: z.string().optional(),
+  }).optional(),
 });
 export type AuthOutput = z.infer<typeof AuthOutputSchema>;
 
@@ -41,15 +49,15 @@ export async function login(input: z.infer<typeof LoginInputSchema>): Promise<Au
   return loginFlow(input);
 }
 
-export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<AuthOutput> {
+export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
   return signupFlow(input);
 }
 
-export async function forgotPassword(input: z.infer<typeof ForgotPasswordInputSchema>): Promise<AuthOutput> {
+export async function forgotPassword(input: z.infer<typeof ForgotPasswordInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
     return forgotPasswordFlow(input);
 }
 
-export async function logout(): Promise<Omit<AuthOutput, 'userId'>> {
+export async function logout(): Promise<Omit<AuthOutput, 'user'>> {
     return logoutFlow();
 }
 
@@ -57,11 +65,25 @@ export async function logout(): Promise<Omit<AuthOutput, 'userId'>> {
 const users_db = [
     {
       id: "1",
-      email: "test@example.com",
+      email: "emily.carter@med.example.com",
       password: "password", // In a real app, this would be a hash
-      hospitalName: "General Hospital"
+      name: "Dr. Emily Carter",
+      hospitalName: "General Hospital",
+      role: "Clinician",
+      specialty: "Cardiologist",
+      avatar: "https://picsum.photos/100"
+    },
+    {
+      id: "admin01",
+      email: "admin@med.example.com",
+      password: "adminpass",
+      name: "Admin User",
+      hospitalName: "GenoSym-AI Corp",
+      role: "Admin",
+      specialty: "System Administrator",
+      avatar: "https://picsum.photos/110"
     }
-]
+];
 
 // Login Flow
 const loginFlow = ai.defineFlow(
@@ -75,7 +97,9 @@ const loginFlow = ai.defineFlow(
     // This is a mock implementation. In a real app, you'd check against a database.
     const user = users_db.find(u => u.email === input.email && u.password === input.password);
     if (user) {
-        return { success: true, message: 'Login successful', userId: user.id };
+        // In a real app, you wouldn't send the password back
+        const { password, ...userToReturn } = user;
+        return { success: true, message: 'Login successful', user: userToReturn };
     } else {
         return { success: false, message: 'Invalid email or password' };
     }
@@ -88,7 +112,7 @@ const signupFlow = ai.defineFlow(
   {
     name: 'signupFlow',
     inputSchema: SignupInputSchema,
-    outputSchema: AuthOutputSchema,
+    outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
     console.log('Signup attempt:', input.email);
@@ -103,7 +127,11 @@ const signupFlow = ai.defineFlow(
         id: (users_db.length + 1).toString(),
         email: input.email,
         password: input.password,
-        hospitalName: input.hospitalName
+        hospitalName: input.hospitalName,
+        name: "New User",
+        role: "Clinician", // Default role
+        specialty: "General Practice",
+        avatar: `https://picsum.photos/seed/${Math.random()}/100`
     }
     users_db.push(newUser)
     
@@ -116,7 +144,7 @@ const forgotPasswordFlow = ai.defineFlow(
     {
         name: 'forgotPasswordFlow',
         inputSchema: ForgotPasswordInputSchema,
-        outputSchema: AuthOutputSchema,
+        outputSchema: z.object({ success: z.boolean(), message: z.string() }),
     },
     async (input) => {
         console.log('Forgot password for:', input.email);

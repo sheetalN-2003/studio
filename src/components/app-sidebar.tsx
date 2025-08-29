@@ -33,32 +33,39 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { logout } from '@/ai/flows/user-auth-flow';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
 
 const menuItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/predict', label: 'Disease Prediction', icon: Stethoscope },
-  { href: '/classify', label: 'Dataset Classification', icon: FolderKanban },
-  { href: '/analytics', label: 'Analytics', icon: AreaChart },
-  { href: '/admin', label: 'Admin', icon: Shield },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, adminOnly: false },
+  { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, adminOnly: false },
+  { href: '/analytics', label: 'Analytics', icon: AreaChart, adminOnly: false },
+  { href: '/admin', label: 'Admin', icon: Shield, adminOnly: true },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    const result = await logout();
-    if (result.success) {
-      toast({
-        title: "Logged Out",
-        description: "You have been successfully logged out.",
-      });
-      router.push('/login');
-    }
+    await logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    router.push('/login');
   };
+  
+  const availableMenuItems = menuItems.filter(item => !item.adminOnly || (user && user.role === 'Admin'));
+
+
+  if (!user) {
+      // You can return a loader here or null
+      return null;
+  }
 
 
   return (
@@ -71,7 +78,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {availableMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
@@ -119,12 +126,12 @@ export function AppSidebar() {
                         <div className="flex w-full items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Avatar className="size-7">
-                                <AvatarImage src="https://picsum.photos/100" data-ai-hint="person" alt="Dr. Emily Carter" />
-                                <AvatarFallback>EC</AvatarFallback>
+                                <AvatarImage src={user.avatar} data-ai-hint="person" alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col text-left">
-                                <span className="text-sm font-medium">Dr. Emily Carter</span>
-                                <span className="text-xs text-sidebar-foreground/70">Cardiologist</span>
+                                <span className="text-sm font-medium">{user.name}</span>
+                                <span className="text-xs text-sidebar-foreground/70">{user.specialty}</span>
                                 </div>
                             </div>
                         </div>
@@ -133,9 +140,9 @@ export function AppSidebar() {
                 <DropdownMenuContent className="w-56" side="right" align="end" forceMount>
                      <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">Dr. Emily Carter</p>
+                            <p className="text-sm font-medium leading-none">{user.name}</p>
                             <p className="text-xs leading-none text-muted-foreground">
-                            emily.carter@med.example.com
+                            {user.email}
                             </p>
                         </div>
                     </DropdownMenuLabel>
