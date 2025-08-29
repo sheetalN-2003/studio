@@ -29,6 +29,7 @@ import { Logo } from "@/components/icons";
 import { signup } from "@/ai/flows/user-auth-flow";
 
 const formSchema = z.object({
+  name: z.string().min(1, { message: "Full name is required." }),
   hospitalName: z.string().min(1, { message: "Hospital name is required." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
@@ -42,6 +43,7 @@ export default function SignupPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       hospitalName: "",
       email: "",
       password: "",
@@ -93,6 +95,19 @@ export default function SignupPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+               <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Dr. John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="hospitalName"

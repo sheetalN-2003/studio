@@ -18,6 +18,7 @@ const LoginInputSchema = z.object({
 });
 
 const SignupInputSchema = z.object({
+  name: z.string(),
   hospitalName: z.string(),
   email: z.string().email(),
   password: z.string(),
@@ -127,8 +128,8 @@ const signupFlow = ai.defineFlow(
         id: (users_db.length + 1).toString(),
         email: input.email,
         password: input.password,
+        name: input.name,
         hospitalName: input.hospitalName,
-        name: "New User",
         role: "Clinician", // Default role
         specialty: "General Practice",
         avatar: `https://picsum.photos/seed/${Math.random()}/100`
