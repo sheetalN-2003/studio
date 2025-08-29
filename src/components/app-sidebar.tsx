@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from './icons';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { AiChat } from './ai-chat';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,16 +96,6 @@ export function AppSidebar() {
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
-           <SidebarMenuItem>
-            <AiChat>
-                <SidebarMenuButton
-                tooltip={{ children: 'AI Assistant', side: 'right' }}
-                >
-                <MessageCircle />
-                <span>AI Assistant</span>
-                </SidebarMenuButton>
-            </AiChat>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild

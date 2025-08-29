@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/context/auth-context';
+import { AiChat } from '@/components/ai-chat';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
             {children}
+            <AiChat />
         </AuthProvider>
         <Toaster />
       </body>

@@ -14,16 +14,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Bot, MessageCircle } from "lucide-react";
 import { chat } from "@/ai/flows/chat-flow";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 interface Message {
   role: "user" | "model";
   content: string;
 }
 
-export function AiChat({ children }: { children: React.ReactNode }) {
+export function AiChat() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,16 +65,28 @@ export function AiChat({ children }: { children: React.ReactNode }) {
         });
     }
   }, [messages]);
+
+  if (!user) {
+    return null;
+  }
   
 
   return (
     <Sheet>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+      <SheetTrigger asChild>
+        <Button size="icon" className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg z-50">
+            <MessageCircle className="h-7 w-7" />
+            <span className="sr-only">Open Medora Assistant</span>
+        </Button>
+      </SheetTrigger>
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>AI Assistant</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <Bot className="h-6 w-6 text-primary" />
+            Medora
+          </SheetTitle>
           <SheetDescription>
-            Ask me anything about rare diseases, genomic data, or this app.
+            Your AI assistant for rare diseases, genomic data, or this app.
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 flex flex-col min-h-0">
@@ -87,8 +101,9 @@ export function AiChat({ children }: { children: React.ReactNode }) {
                   )}
                 >
                   {message.role === "model" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>AI</AvatarFallback>
+                    <Avatar className="h-8 w-8 bg-primary text-primary-foreground flex items-center justify-center">
+                        <Bot className="h-5 w-5" />
+                        <AvatarFallback>M</AvatarFallback>
                     </Avatar>
                   )}
                   <div
@@ -101,18 +116,19 @@ export function AiChat({ children }: { children: React.ReactNode }) {
                   >
                     {message.content}
                   </div>
-                  {message.role === "user" && (
+                  {message.role === "user" && user && (
                     <Avatar className="h-8 w-8">
-                       <AvatarImage src="https://picsum.photos/100" data-ai-hint="person" alt="User" />
-                      <AvatarFallback>U</AvatarFallback>
+                       <AvatarImage src={user.avatar} data-ai-hint="person" alt={user.name} />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                   )}
                 </div>
               ))}
                {isLoading && (
                 <div className="flex items-start gap-3 justify-start">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>AI</AvatarFallback>
+                    <Avatar className="h-8 w-8 bg-primary text-primary-foreground flex items-center justify-center">
+                        <Bot className="h-5 w-5" />
+                        <AvatarFallback>M</AvatarFallback>
                     </Avatar>
                     <div className="rounded-lg p-3 max-w-[80%] text-sm bg-muted flex items-center">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -127,7 +143,7 @@ export function AiChat({ children }: { children: React.ReactNode }) {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
+              placeholder="Ask Medora..."
               disabled={isLoading}
             />
             <Button type="submit" disabled={isLoading || !input.trim()} size="icon">
