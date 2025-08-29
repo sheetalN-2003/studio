@@ -57,7 +57,7 @@ export default function SignupPage() {
       if (result.success) {
         toast({
           title: "Signup Successful",
-          description: "You can now log in with your credentials.",
+          description: `Hello ${values.name}! You can now log in.`,
         });
         router.push("/login");
       } else {

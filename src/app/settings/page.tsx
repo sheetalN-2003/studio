@@ -1,3 +1,4 @@
+"use client";
 
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,9 +6,48 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/context/auth-context';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
+  const { user, login: updateUser } = useAuth();
+  const { toast } = useToast();
+  
+  // Initialize state only when user is loaded to prevent issues with server rendering
+  const [name, setName] = useState(user?.name || '');
+  const [specialty, setSpecialty] = useState(user?.specialty || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Effect to update state when user object changes (e.g., after login)
+  useState(() => {
+    if (user) {
+      setName(user.name);
+      setSpecialty(user.specialty || '');
+    }
+  }, [user]);
+
+  const handleSaveChanges = () => {
+    if (!user) return;
+    setIsSaving(true);
+    // In a real app, you would call an API to save the changes.
+    // Here we'll just update the context and localStorage.
+    setTimeout(() => {
+        const updatedUser = { ...user, name, specialty };
+        updateUser(updatedUser);
+        setIsSaving(false);
+        toast({
+        title: 'Profile Updated',
+        description: 'Your changes have been saved successfully.',
+        });
+    }, 500); // Simulate network delay
+  };
+
+  if (!user) {
+    return null; // Or a loading spinner
+  }
+
   return (
     <MainLayout pageTitle="Settings">
       <div className="space-y-6">
@@ -19,32 +59,35 @@ export default function SettingsPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src="https://picsum.photos/100" data-ai-hint="person" alt="Dr. Emily Carter" />
-                <AvatarFallback>EC</AvatarFallback>
+                <AvatarImage src={user.avatar} data-ai-hint="person" alt={user.name} />
+                <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
               </Avatar>
               <Button variant="outline">Change Picture</Button>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue="Dr. Emily Carter" />
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" defaultValue="emily.carter@med.example.com" type="email" readOnly />
+                <Input id="email" value={user.email} type="email" readOnly />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="hospital">Hospital</Label>
-                <Input id="hospital" defaultValue="General Hospital" readOnly />
+                <Input id="hospital" value={user.hospitalName} readOnly />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="specialty">Specialty</Label>
-                <Input id="specialty" defaultValue="Cardiologist" />
+                <Input id="specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
               </div>
             </div>
           </CardContent>
           <CardContent>
-            <Button>Save Changes</Button>
+            <Button onClick={handleSaveChanges} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+            </Button>
           </CardContent>
         </Card>
         
