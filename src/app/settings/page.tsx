@@ -20,7 +20,6 @@ export default function SettingsPage() {
   const [specialty, setSpecialty] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Effect to update state when user object changes (e.g., after login)
   useEffect(() => {
     if (user) {
       setName(user.name || '');
