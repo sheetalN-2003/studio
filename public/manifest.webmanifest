@@ -1,0 +1,21 @@
+{
+  "name": "GenoSym-AI",
+  "short_name": "GenoSym",
+  "description": "AI-powered rare disease prediction using multi-modal data for hospital use.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E5E0F8",
+  "theme_color": "#2E3192",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
