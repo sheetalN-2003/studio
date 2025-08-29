@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/auth-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -15,15 +15,14 @@ export default function SettingsPage() {
   const { user, login: updateUser } = useAuth();
   const { toast } = useToast();
   
-  // Initialize state only when user is loaded to prevent issues with server rendering
-  const [name, setName] = useState(user?.name || '');
-  const [specialty, setSpecialty] = useState(user?.specialty || '');
+  const [name, setName] = useState('');
+  const [specialty, setSpecialty] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Effect to update state when user object changes (e.g., after login)
-  useState(() => {
+  useEffect(() => {
     if (user) {
-      setName(user.name);
+      setName(user.name || '');
       setSpecialty(user.specialty || '');
     }
   }, [user]);
@@ -45,7 +44,13 @@ export default function SettingsPage() {
   };
 
   if (!user) {
-    return null; // Or a loading spinner
+    return (
+        <MainLayout pageTitle="Settings">
+            <div className="flex h-64 w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        </MainLayout>
+    );
   }
 
   return (
