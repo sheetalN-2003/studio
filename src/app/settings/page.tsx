@@ -1,3 +1,4 @@
+
 "use client";
 
 import { MainLayout } from '@/components/main-layout';
@@ -43,77 +44,73 @@ export default function SettingsPage() {
     }, 500); // Simulate network delay
   };
 
-  if (!user) {
-    return (
-        <MainLayout pageTitle="Settings">
-            <div className="flex h-64 w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        </MainLayout>
-    );
-  }
-
   return (
     <MainLayout pageTitle="Settings">
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>User Profile</CardTitle>
-            <CardDescription>Update your personal information and profile picture.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={user.avatar} data-ai-hint="person" alt={user.name} />
-                <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
-              </Avatar>
-              <Button variant="outline">Change Picture</Button>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" value={user.email} type="email" readOnly />
-              </div>
-               <div className="space-y-2">
-                <Label htmlFor="hospital">Hospital</Label>
-                <Input id="hospital" value={user.hospitalName} readOnly />
-              </div>
-               <div className="space-y-2">
-                <Label htmlFor="specialty">Specialty</Label>
-                <Input id="specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
-              </div>
-            </div>
-          </CardContent>
-          <CardContent>
-            <Button onClick={handleSaveChanges} disabled={isSaving}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card>
+      {!user ? (
+        <div className="flex h-64 w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <Card>
             <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Manage your account preferences and security.</CardDescription>
-            </Header>
-            <CardContent className="space-y-4">
-                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <Label>Change Password</Label>
-                        <p className="text-xs text-muted-foreground">
-                            For security, you will be logged out after changing your password.
-                        </p>
-                    </div>
-                    <Button variant="outline">Change Password</Button>
+              <CardTitle>User Profile</CardTitle>
+              <CardDescription>Update your personal information and profile picture.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={user.avatar} data-ai-hint="person" alt={user.name} />
+                  <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+                <Button variant="outline">Change Picture</Button>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" value={user.email} type="email" readOnly />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="hospital">Hospital</Label>
+                  <Input id="hospital" value={user.hospitalName} readOnly />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="specialty">Specialty</Label>
+                  <Input id="specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
+                </div>
+              </div>
             </CardContent>
-        </Card>
-      </div>
+            <CardContent>
+              <Button onClick={handleSaveChanges} disabled={isSaving}>
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Changes
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+              <CardHeader>
+                  <CardTitle>Account Settings</CardTitle>
+                  <CardDescription>Manage your account preferences and security.</CardDescription>
+              </Header>
+              <CardContent className="space-y-4">
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                          <Label>Change Password</Label>
+                          <p className="text-xs text-muted-foreground">
+                              For security, you will be logged out after changing your password.
+                          </p>
+                      </div>
+                      <Button variant="outline">Change Password</Button>
+                  </div>
+              </CardContent>
+          </Card>
+        </div>
+      )}
     </MainLayout>
   );
 }
