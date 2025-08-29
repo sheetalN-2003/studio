@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const withPWA = require("@ducanh2912/next-pwa").default({
@@ -34,6 +35,16 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  webpack: (config, { isServer }) => {
+    // Fix for sharp module not found
+    if (isServer) {
+      config.externals.push({
+        sharp: 'commonjs sharp',
+        'onnxruntime-node': 'commonjs onnxruntime-node',
+      });
+    }
+    return config;
   },
 };
 
