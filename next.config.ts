@@ -3,6 +3,11 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  devIndicators: {
+    allowedDevOrigins: [
+      "*.cluster-52r6vzs3ujeoctkkxpjif3x34a.cloudworkstations.dev",
+    ],
+  },
   images: {
     remotePatterns: [
       {
@@ -19,19 +24,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
-    ignoreBuildErrors: true,
-  },
-  pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx', 'mjs', 'cjs'],
 };
 
 export default nextConfig;
