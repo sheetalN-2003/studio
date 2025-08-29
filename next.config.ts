@@ -2,7 +2,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   devIndicators: {
     allowedDevOrigins: [
       "*.cluster-52r6vzs3ujeoctkkxpjif3x34a.cloudworkstations.dev",
