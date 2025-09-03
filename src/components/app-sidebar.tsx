@@ -37,14 +37,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 
-const menuItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
-  { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, adminOnly: false },
-  { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, adminOnly: false },
-  { href: '/analytics', label: 'Analytics', icon: AreaChart, adminOnly: false },
-  { href: '/timeline', label: 'Patient Timeline', icon: Clock, adminOnly: false },
-  { href: '/admin', label: 'Doctor Management', icon: Users, adminOnly: true },
-  { href: '/audit', label: 'Audit Log', icon: FileClock, adminOnly: true },
+const allMenuItems = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, role: 'Doctor' },
+  { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, role: 'Doctor' },
+  { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, role: 'Doctor' },
+  { href: '/analytics', label: 'Analytics', icon: AreaChart, role: 'Doctor' },
+  { href: '/timeline', label: 'Patient Timeline', icon: Clock, role: 'Doctor' },
+  { href: '/admin', label: 'Doctor Management', icon: Users, role: 'Admin' },
+  { href: '/audit', label: 'Audit Log', icon: FileClock, role: 'Admin' },
 ];
 
 export function AppSidebar() {
@@ -62,13 +62,12 @@ export function AppSidebar() {
     router.push('/login');
   };
   
-  const availableMenuItems = menuItems.filter(item => !item.adminOnly || (user && user.role === 'Admin'));
-
-
   if (!user) {
       // You can return a loader here or null
       return null;
   }
+
+  const menuItems = allMenuItems.filter(item => item.role === user.role);
 
 
   return (
@@ -81,7 +80,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {availableMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
