@@ -29,7 +29,7 @@ import {
   type ChartConfig,
   type ChartContainerProps,
   ChartContext,
-} from "recharts-extend"
+} from "@/lib/chart-utils"
 
 import { cn } from "@/lib/utils"
 import {
