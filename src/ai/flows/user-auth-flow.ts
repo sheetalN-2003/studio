@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A user authentication AI agent for a hospital-grade platform.
@@ -22,7 +23,8 @@ const LoginInputSchema = z.object({
 
 const SignupInputSchema = z.object({
   name: z.string(),
-  hospitalName: z.string(), // For now, we'll use this to find the hospitalId
+  hospitalName: z.string(),
+  hospitalId: z.string(),
   department: z.string(),
   licenseId: z.string(),
   email: z.string().email(),
@@ -46,6 +48,14 @@ const ApproveDoctorInputSchema = z.object({
 });
 
 // Schemas for Output
+const HospitalSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    adminId: z.string(),
+});
+export type Hospital = z.infer<typeof HospitalSchema>;
+
+
 const UserSchema = z.object({
     id: z.string(),
     email: z.string(),
@@ -66,6 +76,7 @@ const AuthOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   user: UserSchema.optional(),
+  hospital: HospitalSchema.optional(),
 });
 export type AuthOutput = z.infer<typeof AuthOutputSchema>;
 
@@ -75,7 +86,7 @@ const PendingRequestsOutputSchema = z.object({
 
 
 // Mock database of users and hospitals
-const hospitals_db = [
+const hospitals_db: Hospital[] = [
     { id: "H001", name: "General Hospital", adminId: "admin01" },
     { id: "H002", name: "City Clinic", adminId: "admin02" },
     { id: "H003", name: "Sunrise Medical", adminId: "admin03" },
@@ -85,6 +96,7 @@ const users_db: User[] = [
     {
       id: "admin01",
       email: "admin@med.example.com",
+      // @ts-ignore
       password: "adminpass",
       name: "Dr. Admin User",
       hospitalId: "H001",
@@ -97,6 +109,7 @@ const users_db: User[] = [
     {
       id: "1",
       email: "emily.carter@med.example.com",
+      // @ts-ignore
       password: "password", // In a real app, this would be a hash
       name: "Dr. Emily Carter",
       hospitalId: "H001",
@@ -111,6 +124,7 @@ const users_db: User[] = [
     {
       id: "2",
       email: "ben.zhang@med.example.com",
+      // @ts-ignore
       password: "password",
       name: "Dr. Ben Zhang",
       hospitalId: "H002",
@@ -125,6 +139,7 @@ const users_db: User[] = [
     {
         id: 'pending01',
         email: 'new.doctor@med.example.com',
+        // @ts-ignore
         password: 'password',
         name: 'Dr. Sarah Day',
         hospitalId: 'H001',
@@ -210,9 +225,9 @@ const signupFlow = ai.defineFlow(
         return { success: false, message: 'An account with this email already exists.' };
     }
     
-    const hospital = hospitals_db.find(h => h.name.toLowerCase() === input.hospitalName.toLowerCase());
+    const hospital = hospitals_db.find(h => h.id.toLowerCase() === input.hospitalId.toLowerCase() && h.name.toLowerCase() === input.hospitalName.toLowerCase());
     if(!hospital) {
-        return { success: false, message: `Hospital "${input.hospitalName}" is not registered.` };
+        return { success: false, message: `The provided Hospital Name and Hospital ID do not match a registered hospital. Please verify the details and try again.` };
     }
 
     const newUser: User & { password?: string } = {
@@ -270,19 +285,19 @@ const registerHospitalFlow = ai.defineFlow(
             avatar: `https://picsum.photos/seed/${Math.random()}/110`,
         };
 
-        const newHospital = {
+        const newHospital: Hospital = {
             id: hospitalId,
             name: input.hospitalName,
             adminId: adminId,
         };
 
-        hospitals_db.push(newHospital as any);
+        hospitals_db.push(newHospital);
         users_db.push(newAdmin as User);
 
         // In a real app, you wouldn't send the password back
         const { password, ...userToReturn } = newAdmin;
         
-        return { success: true, message: "Hospital registered successfully. You can now log in.", user: userToReturn as User };
+        return { success: true, message: "Hospital registered successfully.", user: userToReturn as User, hospital: newHospital };
     }
 );
 
@@ -337,9 +352,11 @@ const forgotPasswordFlow = ai.defineFlow(
         console.log('Forgot password for:', input.email);
         const existingUser = users_db.find(u => u.email === input.email);
         if(!existingUser) {
+            // Don't reveal if user exists or not for security
             return { success: true, message: "If a user with that email exists, a reset link has been sent."}
         }
         
+        // Simulate sending email
         return { success: true, message: "If a user with that email exists, a reset link has been sent." };
     }
 );
@@ -352,6 +369,9 @@ const logoutFlow = ai.defineFlow(
     },
     async () => {
         console.log('Logout attempt');
+        // In a real app, this would invalidate a session token
         return { success: true, message: 'Logout successful' };
     }
 );
+
+    

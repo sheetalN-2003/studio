@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -24,10 +25,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, PartyPopper, Copy } from "lucide-react";
 import { Logo } from "@/components/icons";
-import { registerHospital } from "@/ai/flows/user-auth-flow";
+import { registerHospital, type User, type Hospital } from "@/ai/flows/user-auth-flow";
 import { useAuth } from "@/context/auth-context";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
     hospitalName: z.string().min(1, 'Hospital name is required'),
@@ -41,7 +43,7 @@ export default function RegisterHospitalPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { login: authLogin } = useAuth();
+  const [registrationResult, setRegistrationResult] = useState<{user: User, hospital: Hospital} | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,13 +60,12 @@ export default function RegisterHospitalPage() {
     setIsLoading(true);
     try {
       const result = await registerHospital(values);
-      if (result.success && result.user) {
-        authLogin(result.user);
+      if (result.success && result.user && result.hospital) {
         toast({
           title: "Registration Successful",
           description: `Welcome, ${result.user.name}! Your hospital is registered.`,
         });
-        router.push("/");
+        setRegistrationResult({ user: result.user, hospital: result.hospital });
       } else {
         toast({
           variant: "destructive",
@@ -82,6 +83,53 @@ export default function RegisterHospitalPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to Clipboard",
+      description: "Hospital ID has been copied.",
+    });
+  };
+
+  if (registrationResult) {
+     return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+            <div className="mb-8 flex items-center gap-2 text-2xl font-semibold">
+                <Logo className="size-8" />
+                <h1>GenoSym-AI</h1>
+            </div>
+            <Card className="w-full max-w-lg">
+                <CardHeader className="items-center text-center">
+                    <PartyPopper className="h-12 w-12 text-primary" />
+                    <CardTitle className="text-2xl">Registration Complete!</CardTitle>
+                    <CardDescription>
+                        Your hospital is now registered on the GenoSym-AI platform.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Alert>
+                        <AlertTitle className="font-bold">Your Unique Hospital ID</AlertTitle>
+                        <AlertDescription>
+                            Share this ID with doctors at your institution. They will need it to request access.
+                        </AlertDescription>
+                         <div className="my-4 flex items-center justify-center gap-2 rounded-md bg-muted p-3">
+                            <span className="text-2xl font-bold tracking-widest text-primary">{registrationResult.hospital.id}</span>
+                            <Button variant="ghost" size="icon" onClick={() => handleCopyToClipboard(registrationResult.hospital.id)}>
+                                <Copy className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </Alert>
+                    <Link href="/login" className="w-full">
+                        <Button className="w-full" size="lg">
+                            Proceed to Login
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
+        </div>
+    );
   }
 
   return (
@@ -194,3 +242,5 @@ export default function RegisterHospitalPage() {
     </div>
   );
 }
+
+    

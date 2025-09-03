@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -31,6 +32,7 @@ import { signup } from "@/ai/flows/user-auth-flow";
 const formSchema = z.object({
   name: z.string().min(1, { message: "Full name is required." }),
   hospitalName: z.string().min(1, { message: "Hospital name is required." }),
+  hospitalId: z.string().min(1, { message: "Unique Hospital ID is required." }),
   department: z.string().min(1, { message: "Department is required." }),
   licenseId: z.string().min(1, { message: "Medical license ID is required." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -48,6 +50,7 @@ export default function SignupPage() {
     defaultValues: {
       name: "",
       hospitalName: "",
+      hospitalId: "",
       department: "",
       licenseId: "",
       email: "",
@@ -112,7 +115,7 @@ export default function SignupPage() {
         <Logo className="size-8" />
         <h1>GenoSym-AI</h1>
       </div>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle className="text-xl">Request Doctor Access</CardTitle>
           <CardDescription>
@@ -136,6 +139,21 @@ export default function SignupPage() {
                     </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="licenseId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>License ID</FormLabel>
+                        <FormControl>
+                        <Input placeholder="CL12345" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
+               <div className="grid grid-cols-2 gap-4">
                 <FormField
                     control={form.control}
                     name="hospitalName"
@@ -151,6 +169,20 @@ export default function SignupPage() {
                 />
                  <FormField
                     control={form.control}
+                    name="hospitalId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Unique Hospital ID</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g. H001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
+               <FormField
+                    control={form.control}
                     name="department"
                     render={({ field }) => (
                     <FormItem>
@@ -162,20 +194,6 @@ export default function SignupPage() {
                     </FormItem>
                     )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="licenseId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>License ID</FormLabel>
-                        <FormControl>
-                        <Input placeholder="CL12345" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-              </div>
               <FormField
                 control={form.control}
                 name="email"
@@ -223,3 +241,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+    
