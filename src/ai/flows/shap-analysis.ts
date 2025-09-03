@@ -40,9 +40,10 @@ const shapAnalysisFlow = ai.defineFlow(
     // Here we generate mock data based on the input.
     console.log("SHAP analysis input:", patientData);
 
-    const features = ['Age', 'Kidney Function Marker', 'Genetic Marker X', 'Spleen Size', 'Pain in Extremities'];
+    const features = ['Age', 'Kidney Function Marker', 'Genetic Marker X', 'Spleen Size', 'Pain in Extremities', 'Proteomic Marker Z'];
     const hasGenomic = !!patientData.genomicDataFileName;
     const hasImaging = !!patientData.imagingDataFileName;
+    const hasProteomics = !!patientData.proteomicsDataFileName;
     
     // Generate some mock SHAP values.
     const values = [
@@ -51,15 +52,16 @@ const shapAnalysisFlow = ai.defineFlow(
         (Math.random() * 0.5) + (hasGenomic ? 0.4 : 0), // Genetic marker
         (Math.random() * 0.2) + (hasImaging ? 0.2 : 0), // Spleen size
         (Math.random() * 0.2) + (patientData.patientHistory.toLowerCase().includes('pain') ? 0.25 : 0), // Pain
+        (Math.random() * 0.4) + (hasProteomics ? 0.45 : 0), // Proteomic Marker
     ];
     
     // Normalize values to give some negative contributions as well
-    const normalizedValues = values.map(v => v - 0.4);
+    const normalizedValues = values.map(v => v - 0.45);
 
     return {
       features: features,
       values: [normalizedValues],
-      explanation: `The primary factors increasing the likelihood for ${rareDisease} are the presence of genetic marker X and patient-reported severe pain in extremities. The patient's age and kidney function markers also contribute moderately. Imaging data showing an enlarged spleen had a minor impact.`,
+      explanation: `The primary factors increasing the likelihood for ${rareDisease} are the presence of genetic marker X and key proteomic markers. Patient-reported severe pain in extremities and kidney function markers also contribute moderately. Imaging data showing an enlarged spleen had a minor impact.`,
     };
   }
 );

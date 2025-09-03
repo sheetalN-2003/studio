@@ -35,8 +35,9 @@ const formSchema = z.object({
   }),
   genomicData: z.any().optional(),
   imagingData: z.any().optional(),
+  proteomicsData: z.any().optional(),
 }).refine(data => {
-    const hasFiles = data.genomicData?.length > 0 || data.imagingData?.length > 0;
+    const hasFiles = data.genomicData?.length > 0 || data.imagingData?.length > 0 || data.proteomicsData?.length > 0;
     const hasHistory = data.patientHistory.length >= 50;
     return hasFiles || hasHistory;
 }, {
@@ -51,6 +52,7 @@ const defaultFormValues = {
     patientAge: undefined,
     genomicData: undefined,
     imagingData: undefined,
+    proteomicsData: undefined,
 };
 
 export function PredictionForm() {
@@ -68,6 +70,7 @@ export function PredictionForm() {
   
   const genomicFileRef = form.register("genomicData");
   const imagingFileRef = form.register("imagingData");
+  const proteomicsFileRef = form.register("proteomicsData");
 
   const handleReset = () => {
       setResult(null);
@@ -81,7 +84,7 @@ export function PredictionForm() {
     setPatientDataForShap(null);
     
     try {
-        let genomicDataUri, imagingDataUri;
+        let genomicDataUri, imagingDataUri, proteomicsDataUri;
         const patientData: any = { 
           patientHistory: values.patientHistory,
           patientName: values.patientName,
@@ -99,6 +102,11 @@ export function PredictionForm() {
             imagingDataUri = await fileToDataUri(imagingDataFile);
             patientData.imagingDataFileName = imagingDataFile.name;
         }
+        if (values.proteomicsData?.[0]) {
+            const proteomicsDataFile = values.proteomicsData[0];
+            proteomicsDataUri = await fileToDataUri(proteomicsDataFile);
+            patientData.proteomicsDataFileName = proteomicsDataFile.name;
+        }
 
       const history = `
         Patient Name: ${values.patientName || 'N/A'}
@@ -112,6 +120,7 @@ export function PredictionForm() {
       const input = {
           genomicDataUri,
           imagingDataUri,
+          proteomicsDataUri,
           patientHistory: history,
       };
 
@@ -163,13 +172,13 @@ export function PredictionForm() {
                     <Card>
                         <CardContent className="pt-6">
                             <div className="space-y-4">
-                               <p className="text-sm text-muted-foreground">Upload genomic and/or imaging data for the highest accuracy predictions.</p>
+                               <p className="text-sm text-muted-foreground">Upload genomic, imaging, and/or proteomics data for the highest accuracy predictions.</p>
                                 <FormField
                                 control={form.control}
                                 name="genomicData"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Genomic Data</FormLabel>
+                                    <FormLabel>Genomic Data (e.g. VCF, FASTQ)</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -185,11 +194,27 @@ export function PredictionForm() {
                                 name="imagingData"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Imaging Data (e.g., MRI)</FormLabel>
+                                    <FormLabel>Imaging Data (e.g., MRI, DICOM)</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                             <Input type="file" className="pl-10" {...imagingFileRef} />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={form.control}
+                                name="proteomicsData"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Proteomics Data (e.g. CSV, mzML)</FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                            <Input type="file" className="pl-10" {...proteomicsFileRef} />
                                         </div>
                                     </FormControl>
                                     <FormMessage />

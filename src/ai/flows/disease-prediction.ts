@@ -25,6 +25,12 @@ const DiseasePredictionInputSchema = z.object({
     .describe(
       "Imaging data of the patient (e.g., MRI), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  proteomicsDataUri: z
+    .string()
+    .optional()
+    .describe(
+      "Proteomics data of the patient, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
   patientHistory: z.string().describe('Relevant patient history and symptoms, or manual EHR data.'),
 });
 export type DiseasePredictionInput = z.infer<typeof DiseasePredictionInputSchema>;
@@ -60,18 +66,19 @@ const prompt = ai.definePrompt({
   name: 'diseasePredictionPrompt',
   input: {schema: DiseasePredictionInputSchema},
   output: {schema: DiseasePredictionOutputSchema},
-  prompt: `You are a highly specialized AI assistant designed to predict rare diseases based on patient data.
+  prompt: `You are a highly specialized AI assistant designed to predict rare diseases based on multi-omics patient data.
 
-  Analyze the provided genomic data, imaging data, and patient history to predict the likelihood of specific rare diseases.
+  Analyze the provided genomic data, imaging data, proteomics data, and patient history to predict the likelihood of specific rare diseases.
 
   Provide a list of potential diseases, their probabilities, and supporting factors from the provided data.
   Also suggest tests to perform in order to confirm the diagnoses.
 
   {{#if genomicDataUri}}Genomic Data: {{media url=genomicDataUri}}{{/if}}
   {{#if imagingDataUri}}Imaging Data: {{media url=imagingDataUri}}{{/if}}
+  {{#if proteomicsDataUri}}Proteomics Data: {{media url=proteomicsDataUri}}{{/if}}
   Patient History / EHR: {{{patientHistory}}}
 
-  If genomic or imaging data are not provided, base your analysis on the patient history and EHR data. Acknowledge that the confidence will be lower due to the missing data.
+  If genomic, imaging, or proteomics data are not provided, base your analysis on the patient history and EHR data. Acknowledge that the confidence will be lower due to the missing data.
 
   Format the output as a JSON object conforming to the DiseasePredictionOutputSchema schema.
   Set the confidenceLevel based on the quality and completeness of the provided data.
@@ -97,20 +104,28 @@ const diseasePredictionFlow = ai.defineFlow(
 
     const hasGenomic = !!input.genomicDataUri;
     const hasImaging = !!input.imagingDataUri;
-    
+    const hasProteomics = !!input.proteomicsDataUri;
+
     let confidenceLevel = 'low';
-    if (hasGenomic && hasImaging) {
-        confidenceLevel = 'high';
-    } else if (hasGenomic || hasImaging) {
-        confidenceLevel = 'medium';
+    const dataSources = [hasGenomic, hasImaging, hasProteomics].filter(Boolean).length;
+
+    if (dataSources === 3) {
+      confidenceLevel = 'high';
+    } else if (dataSources > 0) {
+      confidenceLevel = 'medium';
     }
+    
+    const factors = ["Patient history shows episodes of severe pain in extremities, presence of angiokeratomas, and decreased kidney function."];
+    if(hasGenomic) factors.push("Genomic data marker GL-3 points towards Fabry.");
+    if(hasProteomics) factors.push("Proteomic analysis shows deficiency in alpha-galactosidase A enzyme.");
+
 
     return {
       predictions: [
         {
           disease: "Fabry Disease",
-          probability: 0.92,
-          supportingFactors: "Patient history shows episodes of severe pain in extremities, presence of angiokeratomas, and decreased kidney function. Genomic data marker GL-3 points towards Fabry.",
+          probability: 0.95,
+          supportingFactors: factors.join(" "),
         },
         {
           disease: "Gaucher Disease",
