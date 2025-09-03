@@ -1,8 +1,9 @@
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Activity, Users, TestTube2, FileText } from 'lucide-react';
+import { Activity, Users, TestTube2, AlertTriangle, BadgeCheck, Zap } from 'lucide-react';
 import { RecentAnalysis } from '@/components/recent-analysis';
-import { DashboardStats } from '@/components/dashboard-stats';
+import { HighRiskPatients } from '@/components/high-risk-patients';
+import { FederatedLearningStatus } from '@/components/federated-learning-status';
 
 export default function DashboardPage() {
   return (
@@ -11,7 +12,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Patients
+              Total Patients Analyzed
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -38,25 +39,25 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Datasets</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">High-Risk Patients</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">215</div>
+            <div className="text-2xl font-bold">12</div>
             <p className="text-xs text-muted-foreground">
-              +3 added this week
+              3 new alerts today
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Model Accuracy</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <BadgeCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">94.2%</div>
+            <div className="text-2xl font-bold">94.8%</div>
             <p className="text-xs text-muted-foreground">
-              Federated model v2.1
+              Federated model v2.2 (+0.6%)
             </p>
           </CardContent>
         </Card>
@@ -73,15 +74,33 @@ export default function DashboardPage() {
             <RecentAnalysis />
           </CardContent>
         </Card>
-        <Card>
-           <CardHeader>
-            <CardTitle>Prediction Statistics</CardTitle>
-            <CardDescription>
-              Breakdown of predictions in the last 7 days.
-            </CardDescription>
-          </CardHeader>
-            <DashboardStats />
-        </Card>
+        <div className="space-y-4 md:space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>High-Risk Patient Alerts</CardTitle>
+                    <CardDescription>
+                    Patients with urgent high-risk scores from recent analyses.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <HighRiskPatients />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-primary" />
+                        Federated Learning Status
+                    </CardTitle>
+                    <CardDescription>
+                    Live training progress of the federated AI model.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <FederatedLearningStatus />
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </MainLayout>
   );

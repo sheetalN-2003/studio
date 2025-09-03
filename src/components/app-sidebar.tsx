@@ -11,6 +11,7 @@ import {
   Settings, 
   Stethoscope,
   Shield,
+  Clock,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -40,6 +41,7 @@ const menuItems = [
   { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, adminOnly: false },
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, adminOnly: false },
   { href: '/analytics', label: 'Analytics', icon: AreaChart, adminOnly: false },
+  { href: '/timeline', label: 'Patient Timeline', icon: Clock, adminOnly: false },
   { href: '/admin', label: 'Admin', icon: Shield, adminOnly: true },
 ];
 
