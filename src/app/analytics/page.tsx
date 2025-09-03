@@ -3,6 +3,26 @@
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, TestTube, FileText, Activity } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+
+const predictionVolumeData = [
+  { date: 'Mon', predictions: 12 },
+  { date: 'Tue', predictions: 19 },
+  { date: 'Wed', predictions: 15 },
+  { date: 'Thu', predictions: 22 },
+  { date: 'Fri', predictions: 18 },
+  { date: 'Sat', predictions: 25 },
+  { date: 'Sun', predictions: 21 },
+];
+
+const topDiseasesData = [
+    { name: 'Fabry', count: 45 },
+    { name: 'Wilson\'s', count: 32 },
+    { name: 'Pompe', count: 28 },
+    { name: 'Gaucher', count: 21 },
+    { name: 'Krabbe', count: 15 },
+];
 
 
 export default function AnalyticsPage() {
@@ -70,10 +90,16 @@ export default function AnalyticsPage() {
               <CardTitle>Prediction Volume Over Time</CardTitle>
               <CardDescription>Monitor the daily and weekly prediction analysis volume.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px]">
-              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                Chart temporarily unavailable.
-              </div>
+            <CardContent className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={predictionVolumeData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                        <ChartTooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
+                        <Bar dataKey="predictions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card>
@@ -81,10 +107,16 @@ export default function AnalyticsPage() {
               <CardTitle>Top Predicted Diseases</CardTitle>
               <CardDescription>Most frequently predicted diseases across all analyses.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px]">
-               <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                Chart temporarily unavailable.
-              </div>
+            <CardContent className="h-[300px] w-full">
+               <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={topDiseasesData} layout="vertical" margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={80} />
+                        <ChartTooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
+                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>

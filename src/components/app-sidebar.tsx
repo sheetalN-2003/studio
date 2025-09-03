@@ -12,6 +12,7 @@ import {
   Shield,
   Clock,
   Users,
+  FileClock,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -43,6 +44,7 @@ const menuItems = [
   { href: '/analytics', label: 'Analytics', icon: AreaChart, adminOnly: false },
   { href: '/timeline', label: 'Patient Timeline', icon: Clock, adminOnly: false },
   { href: '/admin', label: 'Doctor Management', icon: Users, adminOnly: true },
+  { href: '/audit', label: 'Audit Log', icon: FileClock, adminOnly: true },
 ];
 
 export function AppSidebar() {
