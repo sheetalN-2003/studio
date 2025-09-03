@@ -141,7 +141,7 @@ export default function SignupPage() {
                     name="hospitalName"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Hospital Name</FormLabel>
+                        <FormLabel>Registered Hospital Name</FormLabel>
                         <FormControl>
                         <Input placeholder="General Hospital" {...field} />
                         </FormControl>

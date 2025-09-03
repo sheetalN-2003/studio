@@ -4,6 +4,7 @@
  *
  * - login - A function that handles user login.
  * - signup - A function that handles doctor access requests.
+ * - registerHospital - A function that handles new hospital and admin registration.
  * - getPendingRequests - Fetches pending doctor access requests for an admin.
  * - approveDoctor - Approves a doctor's access request.
  * - forgotPassword - A function that handles password reset requests.
@@ -26,6 +27,14 @@ const SignupInputSchema = z.object({
   licenseId: z.string(),
   email: z.string().email(),
   password: z.string(),
+});
+
+const RegisterHospitalInputSchema = z.object({
+    hospitalName: z.string().min(1, 'Hospital name is required'),
+    hospitalEmail: z.string().email('A valid hospital email is required'),
+    adminName: z.string().min(1, 'Admin name is required'),
+    adminEmail: z.string().email('A valid admin email is required'),
+    adminPassword: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 const ForgotPasswordInputSchema = z.object({
@@ -137,6 +146,10 @@ export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<
   return signupFlow(input);
 }
 
+export async function registerHospital(input: z.infer<typeof RegisterHospitalInputSchema>): Promise<AuthOutput> {
+    return registerHospitalFlow(input);
+}
+
 export async function getPendingRequests(adminUserId: string): Promise<PendingRequestsOutputSchema> {
     return getPendingRequestsFlow({adminUserId});
 }
@@ -163,7 +176,7 @@ const loginFlow = ai.defineFlow(
   },
   async (input) => {
     console.log('Login attempt:', input.email);
-    const user = users_db.find(u => u.email === input.email && u.password === input.password);
+    const user = users_db.find(u => u.email === input.email && (u as any).password === input.password);
     
     if (user) {
         if (user.role === 'Doctor' && user.status !== 'approved') {
@@ -174,7 +187,7 @@ const loginFlow = ai.defineFlow(
         }
         
         // In a real app, you wouldn't send the password back
-        const { password, ...userToReturn } = user;
+        const { password, ...userToReturn } = user as any;
         return { success: true, message: 'Login successful', user: userToReturn as User };
     } else {
         return { success: false, message: 'Invalid email or password' };
@@ -202,7 +215,7 @@ const signupFlow = ai.defineFlow(
         return { success: false, message: `Hospital "${input.hospitalName}" is not registered.` };
     }
 
-    const newUser: User = {
+    const newUser: User & { password?: string } = {
         id: `user_${(users_db.length + 1)}`,
         email: input.email,
         password: input.password,
@@ -215,11 +228,64 @@ const signupFlow = ai.defineFlow(
         status: "pending", // Doctors start as pending
         avatar: `https://picsum.photos/seed/${Math.random()}/100`
     }
-    users_db.push(newUser);
+    users_db.push(newUser as User);
     
     return { success: true, message: 'Your access request has been submitted. You will receive an email upon approval.' };
   }
 );
+
+// Hospital Registration Flow
+const registerHospitalFlow = ai.defineFlow(
+    {
+        name: 'registerHospitalFlow',
+        inputSchema: RegisterHospitalInputSchema,
+        outputSchema: AuthOutputSchema,
+    },
+    async (input) => {
+        console.log("New hospital registration:", input.hospitalName);
+
+        const existingHospital = hospitals_db.find(h => h.name.toLowerCase() === input.hospitalName.toLowerCase());
+        if (existingHospital) {
+            return { success: false, message: `Hospital "${input.hospitalName}" is already registered.` };
+        }
+
+        const existingAdmin = users_db.find(u => u.email === input.adminEmail);
+        if (existingAdmin) {
+            return { success: false, message: "An account with this admin email already exists." };
+        }
+        
+        const hospitalId = `H${String(hospitals_db.length + 1).padStart(3, '0')}`;
+        const adminId = `admin_${hospitalId}`;
+        
+        const newAdmin: User & { password?: string } = {
+            id: adminId,
+            email: input.adminEmail,
+            password: input.adminPassword,
+            name: input.adminName,
+            hospitalId: hospitalId,
+            hospitalName: input.hospitalName,
+            role: "Admin",
+            specialty: "System Administrator",
+            status: "approved",
+            avatar: `https://picsum.photos/seed/${Math.random()}/110`,
+        };
+
+        const newHospital = {
+            id: hospitalId,
+            name: input.hospitalName,
+            adminId: adminId,
+        };
+
+        hospitals_db.push(newHospital as any);
+        users_db.push(newAdmin as User);
+
+        // In a real app, you wouldn't send the password back
+        const { password, ...userToReturn } = newAdmin;
+        
+        return { success: true, message: "Hospital registered successfully. You can now log in.", user: userToReturn as User };
+    }
+);
+
 
 // Admin: Get Pending Requests Flow
 const getPendingRequestsFlow = ai.defineFlow(
