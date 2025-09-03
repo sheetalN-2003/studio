@@ -44,8 +44,8 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "emily.carter@med.example.com",
+      password: "password",
     },
   });
 
@@ -87,9 +87,9 @@ export default function LoginPage() {
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Hospital Portal Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to login to your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,9 +132,9 @@ export default function LoginPage() {
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Doctor?{" "}
             <Link href="/signup" className="underline">
-              Sign up
+              Request Access
             </Link>
           </div>
            <div className="mt-2 text-center text-sm">

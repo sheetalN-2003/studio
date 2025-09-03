@@ -7,11 +7,11 @@ import {
   FolderKanban, 
   LayoutDashboard, 
   LogOut,
-  MessageCircle, 
   Settings, 
   Stethoscope,
   Shield,
   Clock,
+  Users,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,7 +42,7 @@ const menuItems = [
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, adminOnly: false },
   { href: '/analytics', label: 'Analytics', icon: AreaChart, adminOnly: false },
   { href: '/timeline', label: 'Patient Timeline', icon: Clock, adminOnly: false },
-  { href: '/admin', label: 'Admin', icon: Shield, adminOnly: true },
+  { href: '/admin', label: 'Doctor Management', icon: Users, adminOnly: true },
 ];
 
 export function AppSidebar() {
@@ -122,7 +122,7 @@ export function AppSidebar() {
                                 </Avatar>
                                 <div className="flex flex-col text-left">
                                 <span className="text-sm font-medium">{user.name}</span>
-                                <span className="text-xs text-sidebar-foreground/70">{user.specialty}</span>
+                                <span className="text-xs text-sidebar-foreground/70">{user.role === 'Admin' ? 'Administrator' : user.specialty}</span>
                                 </div>
                             </div>
                         </div>

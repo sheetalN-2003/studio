@@ -3,17 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { logout as logoutFlow } from '@/ai/flows/user-auth-flow';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  specialty?: string;
-  hospitalName: string;
-  avatar?: string;
-}
+import { logout as logoutFlow, type User } from '@/ai/flows/user-auth-flow';
 
 interface AuthContextType {
   user: User | null;
