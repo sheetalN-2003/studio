@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -59,7 +60,11 @@ export default function LoginPage() {
           title: "Login Successful",
           description: `Welcome back, ${result.user.name}!`,
         });
-        router.push("/");
+        if (result.user.role === 'Admin') {
+            router.push('/admin');
+        } else {
+            router.push('/');
+        }
       } else {
         toast({
           variant: "destructive",
@@ -87,9 +92,9 @@ export default function LoginPage() {
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Hospital Portal Login</CardTitle>
+          <CardTitle className="text-2xl">Member Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account.
+            Enter your credentials to access the platform.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,18 +137,18 @@ export default function LoginPage() {
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
-            Doctor?{" "}
-            <Link href="/signup" className="underline">
-              Request Access
-            </Link>
+            Need an account?
           </div>
           <div className="mt-2 text-center text-sm">
-             New Hospital?{" "}
-            <Link href="/register-hospital" className="underline">
+            <Link href="/signup" className="underline font-medium">
+              Request Doctor Access
+            </Link>
+             <span className="mx-2 text-muted-foreground">or</span>
+            <Link href="/register-hospital" className="underline font-medium">
               Register your Hospital
             </Link>
           </div>
-           <div className="mt-2 text-center text-sm">
+           <div className="mt-4 text-center text-sm">
             <Link href="/forgot-password"className="underline">
               Forgot your password?
             </Link>

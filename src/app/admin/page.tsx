@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { AdminGuard } from '@/components/admin-guard';
 import { getAllDoctorsForAdmin, approveDoctor, rejectDoctor, suspendDoctor, type User } from '@/ai/flows/user-auth-flow';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShieldCheck, ShieldX, UserX } from 'lucide-react';
+import { Loader2, ShieldCheck, ShieldX, UserX, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -32,9 +32,19 @@ function AdminPage() {
   const fetchDoctors = async () => {
       if (user && user.role === 'Admin') {
         setIsLoading(true);
-        const allDoctorsData = await getAllDoctorsForAdmin(user.id);
-        setDoctors(allDoctorsData.doctors);
-        setIsLoading(false);
+        try {
+          const allDoctorsData = await getAllDoctorsForAdmin(user.id);
+          setDoctors(allDoctorsData.doctors);
+        } catch (error) {
+          console.error("Failed to fetch doctors:", error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not fetch the list of doctors.",
+          });
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -94,15 +104,15 @@ function AdminPage() {
   const getStatusBadge = (status: User['status']) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Approved</Badge>;
+        return <Badge className="bg-green-100 text-green-800 border-green-200 capitalize">Approved</Badge>;
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200 capitalize">Pending</Badge>;
       case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+        return <Badge variant="destructive" className="capitalize">Rejected</Badge>;
       case 'suspended':
-        return <Badge variant="destructive" className="bg-orange-100 text-orange-800 border-orange-200">Suspended</Badge>;
+        return <Badge variant="destructive" className="bg-orange-100 text-orange-800 border-orange-200 capitalize">Suspended</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="capitalize">{status}</Badge>;
     }
   }
 
@@ -134,7 +144,7 @@ function AdminPage() {
                         <TableHead>Department</TableHead>
                         <TableHead>License ID</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -174,19 +184,19 @@ function AdminPage() {
                                             <DropdownMenuItem onClick={() => handleUpdate('approve', doctor.id, doctor.name)}>
                                                 <ShieldCheck className="mr-2 h-4 w-4" /> Approve
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive" onClick={() => handleUpdate('reject', doctor.id, doctor.name)}>
+                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleUpdate('reject', doctor.id, doctor.name)}>
                                                 <ShieldX className="mr-2 h-4 w-4" /> Reject
                                             </DropdownMenuItem>
                                         </>
                                     )}
                                     {doctor.status === 'approved' && (
-                                        <DropdownMenuItem className="text-destructive" onClick={() => handleUpdate('suspend', doctor.id, doctor.name)}>
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleUpdate('suspend', doctor.id, doctor.name)}>
                                             <UserX className="mr-2 h-4 w-4" /> Suspend
                                         </DropdownMenuItem>
                                     )}
-                                     {doctor.status === 'suspended' && (
+                                     {(doctor.status === 'suspended' || doctor.status === 'rejected') && (
                                         <DropdownMenuItem onClick={() => handleUpdate('approve', doctor.id, doctor.name)}>
-                                            <ShieldCheck className="mr-2 h-4 w-4" /> Re-Approve
+                                            <UserCheck className="mr-2 h-4 w-4" /> Re-Approve
                                         </DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>

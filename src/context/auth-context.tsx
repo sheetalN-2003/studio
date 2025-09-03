@@ -2,7 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { logout as logoutFlow, type User } from '@/ai/flows/user-auth-flow';
 
 interface AuthContextType {
@@ -18,12 +18,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage", error);
@@ -39,11 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await logoutFlow();
+    // Only call the flow if a user is actually logged in.
+    if (user) {
+        await logoutFlow();
+    }
     localStorage.removeItem('user');
     setUser(null);
-    router.push('/login');
-  }, [router]);
+    // Use replace instead of push to prevent back-button navigation to protected routes
+    if(pathname !== '/login'){
+        router.replace('/login');
+    }
+  }, [router, user, pathname]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
