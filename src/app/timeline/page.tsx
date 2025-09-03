@@ -12,15 +12,15 @@ const timelineData = {
     { date: "2023-01-15", type: "symptom", title: "Initial Consultation", description: "Patient presents with intermittent severe pain in hands and feet.", icon: <Stethoscope /> },
     { date: "2023-02-10", type: "symptom", title: "New Symptom Reported", description: "Patient develops skin lesions (angiokeratomas) on the lower abdomen.", icon: <Stethoscope /> },
     { date: "2023-03-05", type: "genomic", title: "Genomic Sequencing", description: "GLA gene sequencing ordered to investigate suspected lysosomal storage disorder.", icon: <Dna /> },
-    { date: "2023-03-20", type: "genomic", title-class: "text-primary", title: "Genetic Marker Identified", description: "Variant c.679C>T in GLA gene detected.", icon: <Dna /> },
+    { date: "2023-03-20", type: "genomic", "title-class": "text-primary", title: "Genetic Marker Identified", description: "Variant c.679C>T in GLA gene detected.", icon: <Dna /> },
     { date: "2023-04-01", type: "prediction", title: "Initial AI Analysis", description: "AI predicts Fabry Disease with 78% probability based on symptoms and initial labs.", icon: <Lightbulb /> },
-    { date: "2023-04-05", type: "prediction", title-class: "text-primary", title: "Confirmed AI Prediction", description: "AI prediction updated to 92.5% probability for Fabry Disease after including genomic data.", icon: <Lightbulb /> },
+    { date: "2023-04-05", type: "prediction", "title-class": "text-primary", title: "Confirmed AI Prediction", description: "AI prediction updated to 92.5% probability for Fabry Disease after including genomic data.", icon: <Lightbulb /> },
     { date: "2023-04-15", type: "symptom", title: "Treatment Started", description: "Enzyme replacement therapy (ERT) initiated.", icon: <Stethoscope /> },
   ],
   "P002": [
     { date: "2022-11-20", type: "symptom", title: "First Noticed Symptoms", description: "Patient reports Kayser-Fleischer rings and slight tremor in hands.", icon: <Stethoscope /> },
     { date: "2022-12-15", type: "genomic", title: "Genetic Test Ordered", description: "ATP7B gene analysis requested.", icon: <Dna /> },
-    { date: "2023-01-10", type: "genomic", title: "Mutation Confirmed", titleClass: "text-primary", description: "Compound heterozygous mutation in ATP7B gene found.", icon: <Dna /> },
+    { date: "2023-01-10", type: "genomic", "title-class": "text-primary", title: "Mutation Confirmed", description: "Compound heterozygous mutation in ATP7B gene found.", icon: <Dna /> },
     { date: "2023-01-20", type: "prediction", title: "AI Analysis Complete", description: "AI predicts Wilson's Disease with 94% probability.", icon: <Lightbulb /> },
   ]
 };
