@@ -8,15 +8,15 @@ import { Loader2 } from 'lucide-react';
 import { MainLayout } from './main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
-export function AdminGuard({ children }: { children: React.ReactNode }) {
+export function AdminGuard({ children, adminOnly = true }: { children: React.ReactNode, adminOnly?: boolean }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user && user.role !== 'Admin') {
+    if (!isLoading && user && adminOnly && user.role !== 'Admin') {
       router.push('/');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, adminOnly]);
 
   if (isLoading || !user) {
     return (
@@ -26,7 +26,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (user.role !== 'Admin') {
+  if (adminOnly && user.role !== 'Admin') {
      return (
         <MainLayout pageTitle="Unauthorized">
             <Card className="w-full max-w-md mx-auto">
@@ -35,7 +35,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
                     <CardDescription>You do not have permission to view this page.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Please contact your system administrator if you believe this is an error.</p>
+                    <p>This section is for hospital administrators. Please contact your system administrator if you believe this is an error.</p>
                 </CardContent>
             </Card>
         </MainLayout>

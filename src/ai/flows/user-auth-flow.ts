@@ -47,6 +47,15 @@ const ApproveDoctorInputSchema = z.object({
     userId: z.string(),
 });
 
+const RejectDoctorInputSchema = z.object({
+    userId: z.string(),
+});
+
+const SuspendDoctorInputSchema = z.object({
+    userId: z.string(),
+});
+
+
 // Schemas for Output
 const HospitalSchema = z.object({
     id: z.string(),
@@ -80,8 +89,8 @@ const AuthOutputSchema = z.object({
 });
 export type AuthOutput = z.infer<typeof AuthOutputSchema>;
 
-const PendingRequestsOutputSchema = z.object({
-    requests: z.array(UserSchema),
+const AllDoctorsOutputSchema = z.object({
+    doctors: z.array(UserSchema),
 });
 
 
@@ -149,6 +158,20 @@ const users_db: User[] = [
         licenseId: 'CL54321',
         status: 'pending',
         avatar: 'https://picsum.photos/seed/newdoc/100'
+    },
+    {
+        id: 'suspended01',
+        email: 'sus.pended@med.example.com',
+        // @ts-ignore
+        password: 'password',
+        name: 'Dr. Susan Pended',
+        hospitalId: 'H001',
+        hospitalName: 'General Hospital',
+        role: 'Doctor',
+        department: 'Oncology',
+        licenseId: 'CLSUS01',
+        status: 'suspended',
+        avatar: 'https://picsum.photos/seed/suspended/100'
     }
 ];
 
@@ -165,12 +188,20 @@ export async function registerHospital(input: z.infer<typeof RegisterHospitalInp
     return registerHospitalFlow(input);
 }
 
-export async function getPendingRequests(adminUserId: string): Promise<PendingRequestsOutputSchema> {
-    return getPendingRequestsFlow({adminUserId});
+export async function getAllDoctorsForAdmin(adminUserId: string): Promise<AllDoctorsOutputSchema> {
+    return getAllDoctorsFlow({adminUserId});
 }
 
 export async function approveDoctor(input: z.infer<typeof ApproveDoctorInputSchema>): Promise<{success: boolean}> {
     return approveDoctorFlow(input);
+}
+
+export async function rejectDoctor(input: z.infer<typeof RejectDoctorInputSchema>): Promise<{success: boolean}> {
+    return rejectDoctorFlow(input);
+}
+
+export async function suspendDoctor(input: z.infer<typeof SuspendDoctorInputSchema>): Promise<{success: boolean}> {
+    return suspendDoctorFlow(input);
 }
 
 export async function forgotPassword(input: z.infer<typeof ForgotPasswordInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
@@ -195,10 +226,15 @@ const loginFlow = ai.defineFlow(
     
     if (user) {
         if (user.role === 'Doctor' && user.status !== 'approved') {
-            return { success: false, message: 'Your account is pending approval. Please contact your hospital administrator.' };
-        }
-        if (user.status === 'suspended') {
-            return { success: false, message: 'Your account has been suspended.' };
+            if (user.status === 'pending') {
+                return { success: false, message: 'Your account is pending approval. Please contact your hospital administrator.' };
+            }
+            if (user.status === 'rejected') {
+                return { success: false, message: 'Your access request has been rejected.' };
+            }
+             if (user.status === 'suspended') {
+                return { success: false, message: 'Your account has been suspended.' };
+            }
         }
         
         // In a real app, you wouldn't send the password back
@@ -302,21 +338,21 @@ const registerHospitalFlow = ai.defineFlow(
 );
 
 
-// Admin: Get Pending Requests Flow
-const getPendingRequestsFlow = ai.defineFlow(
+// Admin: Get All Doctors Flow
+const getAllDoctorsFlow = ai.defineFlow(
     {
-        name: 'getPendingRequestsFlow',
+        name: 'getAllDoctorsFlow',
         inputSchema: z.object({ adminUserId: z.string() }),
-        outputSchema: PendingRequestsOutputSchema,
+        outputSchema: AllDoctorsOutputSchema,
     },
     async ({ adminUserId }) => {
         const admin = users_db.find(u => u.id === adminUserId);
         if (!admin || admin.role !== 'Admin') {
-            return { requests: [] };
+            return { doctors: [] };
         }
 
-        const requests = users_db.filter(u => u.hospitalId === admin.hospitalId && u.status === 'pending');
-        return { requests };
+        const doctors = users_db.filter(u => u.hospitalId === admin.hospitalId && u.role === 'Doctor');
+        return { doctors };
     }
 );
 
@@ -334,6 +370,44 @@ const approveDoctorFlow = ai.defineFlow(
             users_db[userIndex].status = 'approved';
             console.log(`Doctor ${userId} approved.`);
             // In a real app, send confirmation email here
+            return { success: true };
+        }
+        return { success: false };
+    }
+);
+
+// Admin: Reject Doctor Flow
+const rejectDoctorFlow = ai.defineFlow(
+    {
+        name: 'rejectDoctorFlow',
+        inputSchema: RejectDoctorInputSchema,
+        outputSchema: z.object({ success: z.boolean() }),
+    },
+    async ({ userId }) => {
+        const userIndex = users_db.findIndex(u => u.id === userId);
+        if (userIndex > -1) {
+            users_db[userIndex].status = 'rejected';
+            console.log(`Doctor ${userId} rejected.`);
+            // In a real app, send notification email here
+            return { success: true };
+        }
+        return { success: false };
+    }
+);
+
+// Admin: Suspend Doctor Flow
+const suspendDoctorFlow = ai.defineFlow(
+    {
+        name: 'suspendDoctorFlow',
+        inputSchema: SuspendDoctorInputSchema,
+        outputSchema: z.object({ success: z.boolean() }),
+    },
+    async ({ userId }) => {
+        const userIndex = users_db.findIndex(u => u.id === userId);
+        if (userIndex > -1) {
+            users_db[userIndex].status = 'suspended';
+            console.log(`Doctor ${userId} suspended.`);
+            // In a real app, send notification email here
             return { success: true };
         }
         return { success: false };
@@ -373,5 +447,3 @@ const logoutFlow = ai.defineFlow(
         return { success: true, message: 'Logout successful' };
     }
 );
-
-    

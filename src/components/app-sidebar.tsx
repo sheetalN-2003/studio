@@ -38,12 +38,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 
 const allMenuItems = [
+  // Doctor Menu Items
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, role: 'Doctor' },
   { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, role: 'Doctor' },
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, role: 'Doctor' },
-  { href: '/analytics', label: 'Analytics', icon: AreaChart, role: 'Doctor' },
   { href: '/timeline', label: 'Patient Timeline', icon: Clock, role: 'Doctor' },
+  // Admin Menu Items
   { href: '/admin', label: 'Doctor Management', icon: Users, role: 'Admin' },
+  { href: '/analytics', label: 'Analytics Hub', icon: AreaChart, role: 'Admin' },
   { href: '/audit', label: 'Audit Log', icon: FileClock, role: 'Admin' },
 ];
 
