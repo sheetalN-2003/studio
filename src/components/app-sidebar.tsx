@@ -9,7 +9,6 @@ import {
   LogOut,
   Settings, 
   Stethoscope,
-  Shield,
   Clock,
   Users,
   FileClock,
@@ -103,21 +102,9 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === '/settings'}
-              tooltip={{ children: 'Settings', side: 'right' }}
-            >
-              <Link href="/settings">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild variant="ghost" className="h-auto w-full justify-start px-2 py-1.5">
                         <div className="flex w-full items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Avatar className="size-7">
@@ -132,7 +119,7 @@ export function AppSidebar() {
                         </div>
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" side="right" align="end" forceMount>
+                <DropdownMenuContent className="w-56 mb-2" side="top" align="start" forceMount>
                      <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                             <p className="text-sm font-medium leading-none">{user.name}</p>
