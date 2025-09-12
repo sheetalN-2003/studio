@@ -43,6 +43,7 @@ const allMenuItems = [
   { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, role: 'Doctor' },
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, role: 'Doctor' },
   { href: '/timeline', label: 'Patient Timeline', icon: Clock, role: 'Doctor' },
+  { href: '/collaboration', label: 'Collaboration', icon: Users, role: 'Doctor' },
   // Admin Menu Items
   { href: '/admin', label: 'Doctor Management', icon: Users, role: 'Admin' },
   { href: '/analytics', label: 'Analytics Hub', icon: AreaChart, role: 'Admin' },
