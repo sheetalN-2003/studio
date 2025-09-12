@@ -1,4 +1,3 @@
-
 "use client";
 
 import { type DiseasePredictionOutput } from '@/ai/flows/disease-prediction';
