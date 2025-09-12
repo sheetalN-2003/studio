@@ -94,7 +94,7 @@ export default function SignupPage() {
                 <CardHeader>
                 <CardTitle className="text-2xl">Request Submitted</CardTitle>
                 <CardDescription>
-                    Your request has been sent to the hospital administrator for approval. Once approved, you will be able to log in with your credentials.
+                    Your request has been sent to the hospital administrator for approval. You will receive an email upon approval.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>

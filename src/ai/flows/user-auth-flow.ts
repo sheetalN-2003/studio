@@ -281,7 +281,7 @@ const signupFlow = ai.defineFlow(
     }
     users_db.push(newUser as User);
     
-    return { success: true, message: 'Your access request has been submitted. You will receive an email upon approval.' };
+    return { success: true, message: 'Your request has been sent to the hospital administrator for approval. You will be notified upon approval.' };
   }
 );
 
