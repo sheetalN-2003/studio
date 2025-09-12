@@ -42,7 +42,7 @@ export function AiChat() {
 
     try {
       const chatHistory = messages.map(m => ({ role: m.role, content: [{ text: m.content }] }));
-      const result = await chat({ query: input, history: chatHistory });
+      const result = await chat({ query: input, history: chatHistory, role: user?.role });
       const modelMessage: Message = { role: "model", content: result.response };
       setMessages((prev) => [...prev, modelMessage]);
     } catch (error) {
