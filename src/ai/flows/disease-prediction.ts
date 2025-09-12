@@ -1,3 +1,4 @@
+
 // disease-prediction.ts
 'use server';
 
@@ -32,6 +33,7 @@ const DiseasePredictionInputSchema = z.object({
       "Proteomics data of the patient, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   patientHistory: z.string().describe('Relevant patient history and symptoms, or manual EHR data.'),
+  isEmergency: z.boolean().optional().describe('Flag for emergency mode, prioritizing speed.'),
 });
 export type DiseasePredictionInput = z.infer<typeof DiseasePredictionInputSchema>;
 
@@ -73,12 +75,17 @@ const prompt = ai.definePrompt({
   Provide a list of potential diseases, their probabilities, and supporting factors from the provided data.
   Also suggest tests to perform in order to confirm the diagnoses.
 
+  {{#if isEmergency}}
+  **URGENT: This is an emergency fast-track analysis. Prioritize speed and provide a preliminary assessment based on the limited data available.**
+  {{/if}}
+
   {{#if genomicDataUri}}Genomic Data: {{media url=genomicDataUri}}{{/if}}
   {{#if imagingDataUri}}Imaging Data: {{media url=imagingDataUri}}{{/if}}
   {{#if proteomicsDataUri}}Proteomics Data: {{media url=proteomicsDataUri}}{{/if}}
   Patient History / EHR: {{{patientHistory}}}
 
   If genomic, imaging, or proteomics data are not provided, base your analysis on the patient history and EHR data. Acknowledge that the confidence will be lower due to the missing data.
+  If this is an emergency analysis, the confidence will inherently be lower; reflect this in your output.
 
   Format the output as a JSON object conforming to the DiseasePredictionOutputSchema schema.
   Set the confidenceLevel based on the quality and completeness of the provided data.
@@ -109,7 +116,9 @@ const diseasePredictionFlow = ai.defineFlow(
     let confidenceLevel = 'low';
     const dataSources = [hasGenomic, hasImaging, hasProteomics].filter(Boolean).length;
 
-    if (dataSources === 3) {
+    if (input.isEmergency) {
+        confidenceLevel = 'low';
+    } else if (dataSources === 3) {
       confidenceLevel = 'high';
     } else if (dataSources > 0) {
       confidenceLevel = 'medium';
@@ -118,13 +127,14 @@ const diseasePredictionFlow = ai.defineFlow(
     const factors = ["Patient history shows episodes of severe pain in extremities, presence of angiokeratomas, and decreased kidney function."];
     if(hasGenomic) factors.push("Genomic data marker GL-3 points towards Fabry.");
     if(hasProteomics) factors.push("Proteomic analysis shows deficiency in alpha-galactosidase A enzyme.");
+    if(input.isEmergency) factors.push("Note: This is a preliminary fast-track analysis based on limited urgent data.");
 
 
     return {
       predictions: [
         {
           disease: "Fabry Disease",
-          probability: 0.95,
+          probability: input.isEmergency ? 0.85 : 0.95,
           supportingFactors: factors.join(" "),
         },
         {
@@ -138,3 +148,5 @@ const diseasePredictionFlow = ai.defineFlow(
     };
   }
 );
+
+    
