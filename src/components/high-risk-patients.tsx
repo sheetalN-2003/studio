@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -47,12 +48,12 @@ export function HighRiskPatients() {
             </TableHeader>
             <TableBody>
                 {highRiskPatients.map((patient) => (
-                <TableRow key={patient.patientId} className="group">
+                <TableRow key={patient.patientId} className="group hover:bg-red-50/50 dark:hover:bg-red-900/10">
                     <TableCell className="font-medium">{patient.patientId}</TableCell>
                     <TableCell>
                         <div className="flex flex-col">
                             <span className="font-medium">{patient.disease}</span>
-                            <span className="text-sm text-destructive">{patient.probability}</span>
+                            <span className="text-sm text-destructive font-semibold">{patient.probability}</span>
                         </div>
                     </TableCell>
                     <TableCell>{patient.reason}</TableCell>

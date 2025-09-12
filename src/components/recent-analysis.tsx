@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -33,6 +34,13 @@ const analyses = [
     probability: "95.3%",
     status: "Completed",
   },
+   {
+    patientId: "P007",
+    disease: "Krabbe Disease",
+    probability: "98.2%",
+    status: "Completed",
+    isCritical: true,
+  },
   {
     patientId: "P005",
     disease: "Huntington's",
@@ -60,10 +68,10 @@ export function RecentAnalysis() {
       </TableHeader>
       <TableBody>
         {analyses.map((analysis) => (
-          <TableRow key={analysis.patientId}>
+          <TableRow key={analysis.patientId} className={analysis.isCritical ? "bg-red-50/50 dark:bg-red-900/10" : ""}>
             <TableCell className="font-medium">{analysis.patientId}</TableCell>
             <TableCell>{analysis.disease}</TableCell>
-            <TableCell className="text-right">{analysis.probability}</TableCell>
+            <TableCell className={`text-right font-medium ${analysis.isCritical ? "text-destructive" : ""}`}>{analysis.probability}</TableCell>
             <TableCell className="text-center">
               <Badge
                 variant={
@@ -75,9 +83,9 @@ export function RecentAnalysis() {
                 }
                 className={
                   analysis.status === 'Completed'
-                    ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800'
+                    ? analysis.isCritical ? 'bg-red-100 text-red-800 border-red-200' : 'bg-green-100 text-green-800 border-green-200'
                     : analysis.status === 'Processing'
-                    ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800'
+                    ? 'bg-blue-100 text-blue-800 border-blue-200'
                     : ''
                 }
               >

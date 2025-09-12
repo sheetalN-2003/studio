@@ -90,10 +90,10 @@ export default function DashboardPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Zap className="h-5 w-5 text-primary" />
-                        Federated Learning Status
+                        Federated Learning Hub
                     </CardTitle>
                     <CardDescription>
-                    Live training progress of the federated AI model.
+                    Live training progress of the global collaborative AI model.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

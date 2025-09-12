@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -34,9 +35,10 @@ export function FederatedLearningStatus() {
             setStatusText(statuses[statusIndex]);
 
             // Simulate progress increase
+            const progressIncrement = 100 / (statuses.length -1);
             let progressInterval = setInterval(() => {
                 currentProgress += 5;
-                if (currentProgress >= (statusIndex + 1) * (100 / statuses.length)) {
+                if (currentProgress >= (statusIndex) * progressIncrement) {
                     if (currentProgress > 100) currentProgress = 100;
                     setProgress(currentProgress);
                     clearInterval(progressInterval);
@@ -46,7 +48,7 @@ export function FederatedLearningStatus() {
             }, 100);
 
 
-        }, 2000); // Change status every 2 seconds
+        }, 3000); // Change status every 3 seconds
 
         return () => clearInterval(interval);
     }, []);
