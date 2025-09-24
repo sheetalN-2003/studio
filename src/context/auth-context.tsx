@@ -3,11 +3,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { logout as logoutFlow, type User } from '@/ai/flows/user-auth-flow';
+import { type User } from '@/ai/flows/user-auth-flow';
+import { useFirebase } from '@/firebase/provider';
+import { getDoc, doc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
+  // login is now handled by onAuthStateChanged
   logout: () => void;
   isLoading: boolean;
 }
@@ -17,44 +19,47 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { auth, firestore, isUserLoading, user: firebaseUser } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('user');
-    } finally {
-        setIsLoading(false);
-    }
-  }, []);
+    const handleAuthChange = async () => {
+      if (isUserLoading) return; // Wait for firebase user state to be determined
 
-  const login = useCallback((userData: User) => {
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-  }, []);
+      if (firebaseUser && firestore) {
+        // User is logged in according to Firebase, now fetch our custom profile
+        const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUser({ id: userDoc.id, ...userDoc.data() } as User);
+        } else {
+          // Profile doesn't exist, maybe an error state?
+          setUser(null);
+        }
+      } else {
+        // No firebase user, so no app user
+        setUser(null);
+      }
+      setIsLoading(false);
+    };
+
+    handleAuthChange();
+
+  }, [firebaseUser, isUserLoading, firestore]);
 
   const logout = useCallback(async () => {
-    // Only call the flow if a user is actually logged in.
-    if (user) {
-        await logoutFlow();
-    }
-    localStorage.removeItem('user');
-    setUser(null);
-    // Use replace instead of push to prevent back-button navigation to protected routes
-    if(pathname !== '/login'){
+    if (auth) {
+      await auth.signOut();
+      setUser(null); // Clear local user state
+      if (pathname !== '/login') {
         router.replace('/login');
+      }
     }
-  }, [router, user, pathname]);
+  }, [auth, router, pathname]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

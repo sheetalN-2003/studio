@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A user authentication AI agent for a hospital-grade platform.
+ * @fileOverview A user authentication flow using Firebase.
  *
  * - login - A function that handles user login.
  * - signup - A function that handles doctor access requests.
@@ -14,6 +14,30 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    sendPasswordResetEmail,
+    signOut,
+} from 'firebase/auth';
+import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    getDoc, 
+    collection, 
+    query, 
+    where, 
+    getDocs,
+    updateDoc,
+    serverTimestamp,
+} from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase';
+
+// Initialize Firebase services
+const { firestore, auth: firebaseAuth } = initializeFirebase();
+
 
 // Schemas for Input
 const LoginInputSchema = z.object({
@@ -61,6 +85,7 @@ const HospitalSchema = z.object({
     id: z.string(),
     name: z.string(),
     adminId: z.string(),
+    domain: z.string().optional(),
 });
 export type Hospital = z.infer<typeof HospitalSchema>;
 
@@ -92,88 +117,6 @@ export type AuthOutput = z.infer<typeof AuthOutputSchema>;
 const AllDoctorsOutputSchema = z.object({
     doctors: z.array(UserSchema),
 });
-
-
-// Mock database of users and hospitals
-const hospitals_db: Hospital[] = [
-    { id: "H001", name: "General Hospital", adminId: "admin01" },
-    { id: "H002", name: "City Clinic", adminId: "admin02" },
-    { id: "H003", name: "Sunrise Medical", adminId: "admin03" },
-];
-
-const users_db: User[] = [
-    {
-      id: "admin01",
-      email: "admin@med.example.com",
-      // @ts-ignore
-      password: "adminpass",
-      name: "Dr. Admin User",
-      hospitalId: "H001",
-      hospitalName: "General Hospital",
-      role: "Admin",
-      specialty: "System Administrator",
-      status: "approved",
-      avatar: "https://picsum.photos/110"
-    },
-    {
-      id: "1",
-      email: "emily.carter@med.example.com",
-      // @ts-ignore
-      password: "password", // In a real app, this would be a hash
-      name: "Dr. Emily Carter",
-      hospitalId: "H001",
-      hospitalName: "General Hospital",
-      department: "Cardiology",
-      licenseId: "CL12345",
-      role: "Doctor",
-      specialty: "Cardiologist",
-      status: "approved",
-      avatar: "https://picsum.photos/100"
-    },
-    {
-      id: "2",
-      email: "ben.zhang@med.example.com",
-      // @ts-ignore
-      password: "password",
-      name: "Dr. Ben Zhang",
-      hospitalId: "H002",
-      hospitalName: "City Clinic",
-      department: "Neurology",
-      licenseId: "CL67890",
-      role: "Doctor",
-      specialty: "Neurologist",
-      status: "approved",
-      avatar: "https://picsum.photos/101",
-    },
-    {
-        id: 'pending01',
-        email: 'new.doctor@med.example.com',
-        // @ts-ignore
-        password: 'password',
-        name: 'Dr. Sarah Day',
-        hospitalId: 'H001',
-        hospitalName: 'General Hospital',
-        role: 'Doctor',
-        department: 'Pediatrics',
-        licenseId: 'CL54321',
-        status: 'pending',
-        avatar: 'https://picsum.photos/seed/newdoc/100'
-    },
-    {
-        id: 'suspended01',
-        email: 'sus.pended@med.example.com',
-        // @ts-ignore
-        password: 'password',
-        name: 'Dr. Susan Pended',
-        hospitalId: 'H001',
-        hospitalName: 'General Hospital',
-        role: 'Doctor',
-        department: 'Oncology',
-        licenseId: 'CLSUS01',
-        status: 'suspended',
-        avatar: 'https://picsum.photos/seed/suspended/100'
-    }
-];
 
 // Exported functions to be called from the UI
 export async function login(input: z.infer<typeof LoginInputSchema>): Promise<AuthOutput> {
@@ -221,27 +164,33 @@ const loginFlow = ai.defineFlow(
     outputSchema: AuthOutputSchema,
   },
   async (input) => {
-    console.log('Login attempt:', input.email);
-    const user = users_db.find(u => u.email === input.email && (u as any).password === input.password);
-    
-    if (user) {
-        if (user.role === 'Doctor' && user.status !== 'approved') {
-            if (user.status === 'pending') {
-                return { success: false, message: 'Your account is pending approval. Please contact your hospital administrator.' };
+    try {
+        const userCredential = await signInWithEmailAndPassword(firebaseAuth, input.email, input.password);
+        const user = userCredential.user;
+
+        const userDocRef = doc(firestore, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+            const userData = userDoc.data() as User;
+             if (userData.role === 'Doctor' && userData.status !== 'approved') {
+                if (userData.status === 'pending') {
+                    return { success: false, message: 'Your account is pending approval. Please contact your hospital administrator.' };
+                }
+                if (userData.status === 'rejected') {
+                    return { success: false, message: 'Your access request has been rejected.' };
+                }
+                if (userData.status === 'suspended') {
+                    return { success: false, message: 'Your account has been suspended.' };
+                }
             }
-            if (user.status === 'rejected') {
-                return { success: false, message: 'Your access request has been rejected.' };
-            }
-             if (user.status === 'suspended') {
-                return { success: false, message: 'Your account has been suspended.' };
-            }
+            return { success: true, message: 'Login successful', user: { ...userData, id: user.uid } };
+        } else {
+            return { success: false, message: 'User profile not found.' };
         }
-        
-        // In a real app, you wouldn't send the password back
-        const { password, ...userToReturn } = user as any;
-        return { success: true, message: 'Login successful', user: userToReturn as User };
-    } else {
-        return { success: false, message: 'Invalid email or password' };
+    } catch (error: any) {
+        console.error("Firebase login error:", error);
+        return { success: false, message: error.message || 'Invalid email or password' };
     }
   }
 );
@@ -255,33 +204,45 @@ const signupFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
-    console.log('Doctor access request from:', input.email);
-    const existingUser = users_db.find(u => u.email === input.email);
-    if(existingUser){
-        return { success: false, message: 'An account with this email already exists.' };
-    }
-    
-    const hospital = hospitals_db.find(h => h.id.toLowerCase() === input.hospitalId.toLowerCase() && h.name.toLowerCase() === input.hospitalName.toLowerCase());
-    if(!hospital) {
-        return { success: false, message: `The provided Hospital Name and Hospital ID do not match a registered hospital. Please verify the details and try again.` };
-    }
+     try {
+        // Check if hospital exists
+        const hospitalRef = doc(firestore, 'hospitals', input.hospitalId);
+        const hospitalDoc = await getDoc(hospitalRef);
 
-    const newUser: User & { password?: string } = {
-        id: `user_${(users_db.length + 1)}`,
-        email: input.email,
-        password: input.password,
-        name: input.name,
-        hospitalId: hospital.id,
-        hospitalName: hospital.name,
-        role: "Doctor",
-        department: input.department,
-        licenseId: input.licenseId,
-        status: "pending", // Doctors start as pending
-        avatar: `https://picsum.photos/seed/${Math.random()}/100`
+        if (!hospitalDoc.exists() || hospitalDoc.data().name.toLowerCase() !== input.hospitalName.toLowerCase()) {
+            return { success: false, message: `The provided Hospital Name and Hospital ID do not match a registered hospital. Please verify the details and try again.` };
+        }
+
+        // We create the user in Firebase Auth but don't sign them in.
+        // We'll use a temporary, secondary Firebase app instance for this to avoid affecting the main app's auth state.
+        const tempApp = initializeFirebase().firebaseApp;
+        const tempAuth = getAuth(tempApp);
+        const userCredential = await createUserWithEmailAndPassword(tempAuth, input.email, input.password);
+        const user = userCredential.user;
+        
+        const newUser: Omit<User, 'id'> = {
+            email: input.email,
+            name: input.name,
+            hospitalId: hospitalDoc.id,
+            hospitalName: hospitalDoc.data().name,
+            role: "Doctor",
+            department: input.department,
+            licenseId: input.licenseId,
+            status: "pending",
+            avatar: `https://picsum.photos/seed/${Math.random()}/100`
+        };
+
+        // Create user document in Firestore
+        await setDoc(doc(firestore, "users", user.uid), newUser);
+
+        return { success: true, message: 'Your request has been sent to the hospital administrator for approval. You will be notified upon approval.' };
+    } catch (error: any) {
+         console.error("Firebase signup error:", error);
+         if (error.code === 'auth/email-already-in-use') {
+            return { success: false, message: 'An account with this email already exists.' };
+         }
+        return { success: false, message: error.message || 'An unexpected error occurred.' };
     }
-    users_db.push(newUser as User);
-    
-    return { success: true, message: 'Your request has been sent to the hospital administrator for approval. You will be notified upon approval.' };
   }
 );
 
@@ -293,47 +254,51 @@ const registerHospitalFlow = ai.defineFlow(
         outputSchema: AuthOutputSchema,
     },
     async (input) => {
-        console.log("New hospital registration:", input.hospitalName);
+        try {
+            // Check if hospital name is unique
+            const hospitalsQuery = query(collection(firestore, 'hospitals'), where('name', '==', input.hospitalName));
+            const existingHospitals = await getDocs(hospitalsQuery);
+            if (!existingHospitals.empty) {
+                return { success: false, message: `Hospital "${input.hospitalName}" is already registered.` };
+            }
 
-        const existingHospital = hospitals_db.find(h => h.name.toLowerCase() === input.hospitalName.toLowerCase());
-        if (existingHospital) {
-            return { success: false, message: `Hospital "${input.hospitalName}" is already registered.` };
+            const userCredential = await createUserWithEmailAndPassword(firebaseAuth, input.adminEmail, input.adminPassword);
+            const adminUser = userCredential.user;
+
+            const hospitalId = `H${String(Math.floor(Math.random() * 900) + 100)}`;
+            const hospitalDomain = input.hospitalEmail.split('@')[1];
+
+            const newHospital: Omit<Hospital, 'id'> = {
+                name: input.hospitalName,
+                adminId: adminUser.uid,
+                domain: hospitalDomain,
+            };
+            await setDoc(doc(firestore, 'hospitals', hospitalId), newHospital);
+
+            const newAdmin: Omit<User, 'id'> = {
+                email: input.adminEmail,
+                name: input.adminName,
+                hospitalId: hospitalId,
+                hospitalName: input.hospitalName,
+                role: "Admin",
+                specialty: "System Administrator",
+                status: "approved",
+                avatar: `https://picsum.photos/seed/${Math.random()}/110`,
+            };
+            await setDoc(doc(firestore, "users", adminUser.uid), newAdmin);
+            
+            const hospitalData: Hospital = { ...newHospital, id: hospitalId };
+            const adminData: User = { ...newAdmin, id: adminUser.uid };
+
+            return { success: true, message: "Hospital registered successfully.", user: adminData, hospital: hospitalData };
+
+        } catch (error: any) {
+            console.error("Firebase hospital registration error:", error);
+            if (error.code === 'auth/email-already-in-use') {
+                return { success: false, message: 'An account with this admin email already exists.' };
+            }
+            return { success: false, message: error.message || "An unexpected error occurred." };
         }
-
-        const existingAdmin = users_db.find(u => u.email === input.adminEmail);
-        if (existingAdmin) {
-            return { success: false, message: "An account with this admin email already exists." };
-        }
-        
-        const hospitalId = `H${String(hospitals_db.length + 1).padStart(3, '0')}`;
-        const adminId = `admin_${hospitalId}`;
-        
-        const newAdmin: User & { password?: string } = {
-            id: adminId,
-            email: input.adminEmail,
-            password: input.adminPassword,
-            name: input.adminName,
-            hospitalId: hospitalId,
-            hospitalName: input.hospitalName,
-            role: "Admin",
-            specialty: "System Administrator",
-            status: "approved",
-            avatar: `https://picsum.photos/seed/${Math.random()}/110`,
-        };
-
-        const newHospital: Hospital = {
-            id: hospitalId,
-            name: input.hospitalName,
-            adminId: adminId,
-        };
-
-        hospitals_db.push(newHospital);
-        users_db.push(newAdmin as User);
-
-        // In a real app, you wouldn't send the password back
-        const { password, ...userToReturn } = newAdmin;
-        
-        return { success: true, message: "Hospital registered successfully.", user: userToReturn as User, hospital: newHospital };
     }
 );
 
@@ -346,13 +311,25 @@ const getAllDoctorsFlow = ai.defineFlow(
         outputSchema: AllDoctorsOutputSchema,
     },
     async ({ adminUserId }) => {
-        const admin = users_db.find(u => u.id === adminUserId);
-        if (!admin || admin.role !== 'Admin') {
+        try {
+            const adminDocRef = doc(firestore, 'users', adminUserId);
+            const adminDoc = await getDoc(adminDocRef);
+
+            if (!adminDoc.exists() || adminDoc.data().role !== 'Admin') {
+                return { doctors: [] };
+            }
+
+            const hospitalId = adminDoc.data().hospitalId;
+            const doctorsQuery = query(collection(firestore, 'users'), where('hospitalId', '==', hospitalId), where('role', '==', 'Doctor'));
+            
+            const querySnapshot = await getDocs(doctorsQuery);
+            const doctors = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+
+            return { doctors };
+        } catch (error) {
+            console.error("Error fetching doctors:", error);
             return { doctors: [] };
         }
-
-        const doctors = users_db.filter(u => u.hospitalId === admin.hospitalId && u.role === 'Doctor');
-        return { doctors };
     }
 );
 
@@ -365,14 +342,15 @@ const approveDoctorFlow = ai.defineFlow(
         outputSchema: z.object({ success: z.boolean() }),
     },
     async ({ userId }) => {
-        const userIndex = users_db.findIndex(u => u.id === userId);
-        if (userIndex > -1) {
-            users_db[userIndex].status = 'approved';
+       try {
+            const userDocRef = doc(firestore, 'users', userId);
+            await updateDoc(userDocRef, { status: 'approved' });
             console.log(`Doctor ${userId} approved.`);
-            // In a real app, send confirmation email here
             return { success: true };
-        }
-        return { success: false };
+       } catch (error) {
+            console.error("Error approving doctor:", error);
+            return { success: false };
+       }
     }
 );
 
@@ -384,14 +362,15 @@ const rejectDoctorFlow = ai.defineFlow(
         outputSchema: z.object({ success: z.boolean() }),
     },
     async ({ userId }) => {
-        const userIndex = users_db.findIndex(u => u.id === userId);
-        if (userIndex > -1) {
-            users_db[userIndex].status = 'rejected';
+         try {
+            const userDocRef = doc(firestore, 'users', userId);
+            await updateDoc(userDocRef, { status: 'rejected' });
             console.log(`Doctor ${userId} rejected.`);
-            // In a real app, send notification email here
             return { success: true };
-        }
-        return { success: false };
+         } catch (error) {
+            console.error("Error rejecting doctor:", error);
+            return { success: false };
+         }
     }
 );
 
@@ -403,14 +382,15 @@ const suspendDoctorFlow = ai.defineFlow(
         outputSchema: z.object({ success: z.boolean() }),
     },
     async ({ userId }) => {
-        const userIndex = users_db.findIndex(u => u.id === userId);
-        if (userIndex > -1) {
-            users_db[userIndex].status = 'suspended';
+        try {
+            const userDocRef = doc(firestore, 'users', userId);
+            await updateDoc(userDocRef, { status: 'suspended' });
             console.log(`Doctor ${userId} suspended.`);
-            // In a real app, send notification email here
             return { success: true };
+        } catch (error) {
+            console.error("Error suspending doctor:", error);
+            return { success: false };
         }
-        return { success: false };
     }
 );
 
@@ -423,15 +403,14 @@ const forgotPasswordFlow = ai.defineFlow(
         outputSchema: z.object({ success: z.boolean(), message: z.string() }),
     },
     async (input) => {
-        console.log('Forgot password for:', input.email);
-        const existingUser = users_db.find(u => u.email === input.email);
-        if(!existingUser) {
-            // Don't reveal if user exists or not for security
-            return { success: true, message: "If a user with that email exists, a reset link has been sent."}
+        try {
+            await sendPasswordResetEmail(firebaseAuth, input.email);
+            return { success: true, message: "If a user with that email exists, a reset link has been sent." };
+        } catch (error: any) {
+            console.error("Forgot password error:", error);
+            // Don't reveal if user exists.
+            return { success: true, message: "If a user with that email exists, a reset link has been sent." };
         }
-        
-        // Simulate sending email
-        return { success: true, message: "If a user with that email exists, a reset link has been sent." };
     }
 );
 
@@ -442,8 +421,12 @@ const logoutFlow = ai.defineFlow(
         outputSchema: z.object({ success: z.boolean(), message: z.string() }),
     },
     async () => {
-        console.log('Logout attempt');
-        // In a real app, this would invalidate a session token
-        return { success: true, message: 'Logout successful' };
+        try {
+            await signOut(firebaseAuth);
+            return { success: true, message: 'Logout successful' };
+        } catch (error: any) {
+            console.error("Logout error:", error);
+            return { success: false, message: "Logout failed." };
+        }
     }
 );

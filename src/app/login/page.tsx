@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { login } from "@/ai/flows/user-auth-flow";
-import { useAuth } from "@/context/auth-context";
+import { useAuth } from '@/context/auth-context';
 
 
 const formSchema = z.object({
@@ -40,7 +40,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { login: authLogin } = useAuth();
+  const { user } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,11 +55,11 @@ export default function LoginPage() {
     try {
       const result = await login(values);
       if (result.success && result.user) {
-        authLogin(result.user);
         toast({
           title: "Login Successful",
           description: `Welcome back, ${result.user.name}!`,
         });
+        // The AuthProvider and AuthGuard will handle the redirect
         if (result.user.role === 'Admin') {
             router.push('/admin');
         } else {
@@ -82,6 +82,12 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+  
+  // If user is already loaded and logged in, AuthGuard will redirect them.
+  // We can show a simple loading state or null while that happens.
+  if (user) {
+      return null;
   }
 
   return (
