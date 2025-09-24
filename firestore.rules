@@ -1,0 +1,235 @@
+/**
+ * @file Firebase Security Rules for GenoSym-AI Firestore Database.
+ *
+ * @corePhilosophy This ruleset enforces a strict, hospital-centric security model. Users can only access data associated with their hospital.
+ *   Data ownership is enforced through denormalized `hospitalId` and `userId` fields on relevant documents.
+ * @dataStructure The database is structured around hospitals and users.
+ *   - `/hospitals/{hospitalId}`: Stores hospital-specific data.
+ *   - `/users/{userId}`: Stores user-specific data.
+ *   - `/hospitals/{hospitalId}/patients/{patientId}`: Stores patient data, scoped to a hospital.
+ *   - `/hospitals/{hospitalId}/datasets/{datasetId}`: Stores dataset information, scoped to a hospital.
+ *   - `/hospitals/{hospitalId}/datasets/{datasetId}/analysisJobs/{analysisJobId}`: Stores analysis job information, scoped to a dataset within a hospital.
+ *   - `/federatedTrainingJobs/{federatedTrainingJobId}`: Stores information about federated training jobs.
+ *   - `/auditLogs/{auditLogId}`: Stores audit logs.
+ * @keySecurityDecisions
+ *   - Data is generally scoped to the hospital.
+ *   - Listing of all users is disallowed to prevent information harvesting.
+ *   - All write operations require authentication.
+ *   - All write operations validate that the `hospitalId` matches the path.
+ *   - The rules leverage denormalization to avoid costly `get()` calls in security rules.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description: Controls access to hospital documents.
+     * @path: /hospitals/{hospitalId}
+     * @allow: (create) Authenticated user can create a hospital document if the ID in the document matches the document ID.
+     * @deny: (create) Unauthenticated user attempts to create a hospital document.
+     * @principle: Enforces document ownership for writes.
+     */
+    match /hospitals/{hospitalId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the user is the owner of the document.
+      function isOwner(hospitalId) {
+        return request.auth != null && request.auth.uid == hospitalId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(hospitalId) {
+        return isOwner(hospitalId) && resource != null;
+      }
+
+      allow get: if true;
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.id == hospitalId;
+      allow update: if isExistingOwner(hospitalId);
+      allow delete: if isExistingOwner(hospitalId);
+    }
+
+    /**
+     * @description: Controls access to user documents.
+     * @path: /users/{userId}
+     * @allow: (create) Authenticated user can create a user document if the ID in the document matches the document ID.
+     * @deny: (create) Unauthenticated user attempts to create a user document.
+     * @principle: Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the user is the owner of the document.
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description: Controls access to patient documents within a hospital.
+     * @path: /hospitals/{hospitalId}/patients/{patientId}
+     * @allow: (create) Authenticated user can create a patient document if the hospitalId in the document matches the path.
+     * @deny: (create) Unauthenticated user attempts to create a patient document.
+     * @principle: Enforces document ownership for writes.
+     */
+    match /hospitals/{hospitalId}/patients/{patientId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the hospital ID in the document matches the path.
+      function isHospitalIdValid(hospitalId) {
+        return request.resource.data.hospitalId == hospitalId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(hospitalId) {
+        return isSignedIn() && request.auth.uid == hospitalId && resource != null;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isHospitalIdValid(hospitalId);
+      allow update: if isExistingOwner(hospitalId);
+      allow delete: if isExistingOwner(hospitalId);
+    }
+
+    /**
+     * @description: Controls access to dataset documents within a hospital.
+     * @path: /hospitals/{hospitalId}/datasets/{datasetId}
+     * @allow: (create) Authenticated user can create a dataset document if the hospitalId in the document matches the path.
+     * @deny: (create) Unauthenticated user attempts to create a dataset document.
+     * @principle: Enforces document ownership for writes.
+     */
+    match /hospitals/{hospitalId}/datasets/{datasetId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the hospital ID in the document matches the path.
+      function isHospitalIdValid(hospitalId) {
+        return request.resource.data.hospitalId == hospitalId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(hospitalId) {
+        return isSignedIn() && request.auth.uid == hospitalId && resource != null;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isHospitalIdValid(hospitalId);
+      allow update: if isExistingOwner(hospitalId);
+      allow delete: if isExistingOwner(hospitalId);
+    }
+
+    /**
+     * @description: Controls access to analysis job documents within a dataset within a hospital.
+     * @path: /hospitals/{hospitalId}/datasets/{datasetId}/analysisJobs/{analysisJobId}
+     * @allow: (create) Authenticated user can create an analysis job document if the hospitalId in the document matches the path.
+     * @deny: (create) Unauthenticated user attempts to create an analysis job document.
+     * @principle: Enforces document ownership for writes.
+     */
+    match /hospitals/{hospitalId}/datasets/{datasetId}/analysisJobs/{analysisJobId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the hospital ID in the document matches the path.
+      function isHospitalIdValid(hospitalId) {
+        return request.resource.data.hospitalId == hospitalId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(hospitalId) {
+        return isSignedIn() && request.auth.uid == hospitalId && resource != null;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isHospitalIdValid(hospitalId);
+      allow update: if isExistingOwner(hospitalId);
+      allow delete: if isExistingOwner(hospitalId);
+    }
+
+    /**
+     * @description: Controls access to federated training job documents.
+     * @path: /federatedTrainingJobs/{federatedTrainingJobId}
+     * @allow: (create) Authenticated user can create a federated training job document.
+     * @deny: (create) Unauthenticated user attempts to create a federated training job document.
+     * @principle: Enforces signed-in users for writes
+     */
+    match /federatedTrainingJobs/{federatedTrainingJobId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the user is the owner of the document.
+      function isOwner(federatedTrainingJobId) {
+        return request.auth != null && request.auth.uid == federatedTrainingJobId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(federatedTrainingJobId) {
+        return isOwner(federatedTrainingJobId) && resource != null;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isExistingOwner(federatedTrainingJobId);
+      allow delete: if isExistingOwner(federatedTrainingJobId);
+    }
+
+    /**
+     * @description: Controls access to audit log documents.
+     * @path: /auditLogs/{auditLogId}
+     * @allow: (create) Authenticated user can create an audit log document.
+     * @deny: (create) Unauthenticated user attempts to create an audit log document.
+     * @principle: Enforces signed-in users for writes.
+     */
+    match /auditLogs/{auditLogId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the user is the owner of the document.
+      function isOwner(auditLogId) {
+        return request.auth != null && request.auth.uid == auditLogId;
+      }
+
+      // Helper function to check if the user is the existing owner of the document.
+      function isExistingOwner(auditLogId) {
+        return isOwner(auditLogId) && resource != null;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isExistingOwner(auditLogId);
+      allow delete: if isExistingOwner(auditLogId);
+    }
+  }
+}

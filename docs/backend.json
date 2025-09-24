@@ -1,0 +1,420 @@
+{
+  "entities": {
+    "Hospital": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Hospital",
+      "type": "object",
+      "description": "Represents a hospital within the GenoSym-AI system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the hospital entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the hospital."
+        },
+        "domain": {
+          "type": "string",
+          "description": "The email domain associated with the hospital for authentication purposes.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the hospital."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "domain"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the GenoSym-AI system, associated with a hospital.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "hospitalId": {
+          "type": "string",
+          "description": "Reference to Hospital. (Relationship: Hospital 1:N User) The hospital this user belongs to."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for login.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the system (e.g., clinician, researcher)."
+        }
+      },
+      "required": [
+        "id",
+        "hospitalId",
+        "email"
+      ]
+    },
+    "Patient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Patient",
+      "type": "object",
+      "description": "Represents a patient whose data is being analyzed within the GenoSym-AI system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the patient entity."
+        },
+        "hospitalId": {
+          "type": "string",
+          "description": "Reference to Hospital. (Relationship: Hospital 1:N Patient) The hospital where the patient is being treated."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The date of birth of the patient.",
+          "format": "date-time"
+        },
+        "gender": {
+          "type": "string",
+          "description": "The gender of the patient."
+        },
+        "medicalHistory": {
+          "type": "string",
+          "description": "A summary of the patient's medical history."
+        }
+      },
+      "required": [
+        "id",
+        "hospitalId"
+      ]
+    },
+    "Dataset": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Dataset",
+      "type": "object",
+      "description": "Represents a dataset uploaded to the GenoSym-AI system for analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the dataset entity."
+        },
+        "hospitalId": {
+          "type": "string",
+          "description": "Reference to Hospital. (Relationship: Hospital 1:N Dataset) The hospital that uploaded the dataset."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Dataset) The user who uploaded the dataset."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "The date and time when the dataset was uploaded.",
+          "format": "date-time"
+        },
+        "fileKey": {
+          "type": "string",
+          "description": "The key or path to the dataset file stored in S3/GCS."
+        },
+        "fileType": {
+          "type": "string",
+          "description": "The type of file uploaded (e.g., VCF, BAM, MRI)."
+        },
+        "diseaseClass": {
+          "type": "string",
+          "description": "The disease class associated with the dataset."
+        }
+      },
+      "required": [
+        "id",
+        "hospitalId",
+        "userId",
+        "uploadDate",
+        "fileKey",
+        "fileType"
+      ]
+    },
+    "AnalysisJob": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AnalysisJob",
+      "type": "object",
+      "description": "Represents an analysis job performed on a dataset within the GenoSym-AI system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the analysis job entity."
+        },
+        "datasetId": {
+          "type": "string",
+          "description": "Reference to Dataset. (Relationship: Dataset 1:N AnalysisJob) The dataset being analyzed."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N AnalysisJob) The user who initiated the analysis job."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date and time when the analysis job started.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The date and time when the analysis job completed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the analysis job (e.g., queued, running, completed, failed)."
+        },
+        "reportUrl": {
+          "type": "string",
+          "description": "The URL to the analysis report generated by the job.",
+          "format": "uri"
+        },
+        "shapValues": {
+          "type": "string",
+          "description": "The location of the SHAP values generated as part of the job."
+        }
+      },
+      "required": [
+        "id",
+        "datasetId",
+        "userId",
+        "startDate",
+        "status"
+      ]
+    },
+    "FederatedTrainingJob": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FederatedTrainingJob",
+      "type": "object",
+      "description": "Represents a federated training job for the rare disease prediction model.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the federated training job."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date and time when the federated training job started.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The date and time when the federated training job completed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the federated training job (e.g., initializing, running, completed, failed)."
+        },
+        "modelVersion": {
+          "type": "string",
+          "description": "The version of the model being trained."
+        },
+        "hospitalIds": {
+          "type": "array",
+          "description": "References to Hospitals. (Relationship: Hospital N:N FederatedTrainingJob). The hospitals participating in this training job.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "startDate",
+        "status"
+      ]
+    },
+    "AuditLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AuditLog",
+      "type": "object",
+      "description": "Represents an audit log entry for actions performed within the GenoSym-AI system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the audit log entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. The user who performed the action."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when the action was performed.",
+          "format": "date-time"
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "The IP address from which the action was performed."
+        },
+        "actionType": {
+          "type": "string",
+          "description": "The type of action performed (e.g., upload dataset, start analysis, login)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the action performed."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "actionType"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/hospitals/{hospitalId}",
+        "definition": {
+          "entityName": "Hospital",
+          "schema": {
+            "$ref": "#/backend/entities/Hospital"
+          },
+          "description": "Stores hospital information. The 'hospitalId' is used as the document ID.",
+          "params": [
+            {
+              "name": "hospitalId",
+              "description": "The unique identifier for the hospital."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user information. The 'userId' is used as the document ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/hospitals/{hospitalId}/patients/{patientId}",
+        "definition": {
+          "entityName": "Patient",
+          "schema": {
+            "$ref": "#/backend/entities/Patient"
+          },
+          "description": "Stores patient data for a specific hospital. Includes denormalized 'hospitalId' for authorization independence.",
+          "params": [
+            {
+              "name": "hospitalId",
+              "description": "The unique identifier for the hospital."
+            },
+            {
+              "name": "patientId",
+              "description": "The unique identifier for the patient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/hospitals/{hospitalId}/datasets/{datasetId}",
+        "definition": {
+          "entityName": "Dataset",
+          "schema": {
+            "$ref": "#/backend/entities/Dataset"
+          },
+          "description": "Stores datasets uploaded to the system. Includes denormalized 'hospitalId' and 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "hospitalId",
+              "description": "The unique identifier for the hospital."
+            },
+            {
+              "name": "datasetId",
+              "description": "The unique identifier for the dataset."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/hospitals/{hospitalId}/datasets/{datasetId}/analysisJobs/{analysisJobId}",
+        "definition": {
+          "entityName": "AnalysisJob",
+          "schema": {
+            "$ref": "#/backend/entities/AnalysisJob"
+          },
+          "description": "Stores analysis jobs associated with a dataset. Includes denormalized 'hospitalId', 'datasetId', and 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "hospitalId",
+              "description": "The unique identifier for the hospital."
+            },
+            {
+              "name": "datasetId",
+              "description": "The unique identifier for the dataset."
+            },
+            {
+              "name": "analysisJobId",
+              "description": "The unique identifier for the analysis job."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/federatedTrainingJobs/{federatedTrainingJobId}",
+        "definition": {
+          "entityName": "FederatedTrainingJob",
+          "schema": {
+            "$ref": "#/backend/entities/FederatedTrainingJob"
+          },
+          "description": "Stores federated training job information. Includes the 'hospitalIds' array to identify participating hospitals.",
+          "params": [
+            {
+              "name": "federatedTrainingJobId",
+              "description": "The unique identifier for the federated training job."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/auditLogs/{auditLogId}",
+        "definition": {
+          "entityName": "AuditLog",
+          "schema": {
+            "$ref": "#/backend/entities/AuditLog"
+          },
+          "description": "Stores audit log entries for actions performed within the system.",
+          "params": [
+            {
+              "name": "auditLogId",
+              "description": "The unique identifier for the audit log entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the GenoSym-AI application with a focus on hospital-only access, data security, and scalability. The structure incorporates denormalization for authorization independence, facilitating secure and efficient security rules. It also takes into account DBAC (Database-Assisted Access Control), avoids hierarchical authorization dependencies, and supports QAPs (Queries Are Not Filters) via structural segregation.\n\nKey aspects of the design:\n\n1.  **Authorization Independence:** The design heavily relies on denormalization to embed authorization context directly into documents. For example, user roles and hospital affiliations are included in documents where access control is required, avoiding the need for `get()` calls in security rules.\n\n2.  **Structural Segregation:** Data is segregated into different collections based on access requirements. User-specific data is stored under `/users/{userId}`, while hospital-level data resides under `/hospitals/{hospitalId}`. This simplifies security rules and improves query performance.\n\n3.  **Access Modeling:** The structure uses both Path-Based ownership and Membership Map models where appropriate. User-owned data utilizes hierarchical paths (e.g., `/users/{userId}/datasets/{datasetId}`), and collaborative data employs membership maps. Global roles are managed using dedicated collections.\n\n4.  **Data Clarity:** Explicit state modeling is encouraged through the use of a `status` field. Predictable schema and naming conventions are consistently applied across collections.\n\nQAP Support:\n\nThe structure supports secure `list` operations (QAPs) by:\n\n*   Segregating data based on access levels. For instance, patient data is stored within hospital-specific collections, allowing for efficient querying within the scope of a hospital.\n*   Denormalizing authorization data, which enables rules to filter based on `request.auth.uid` without relying on complex `get()` calls that prevent efficient `list` operations.\n\nThis design ensures that security rules are simple, robust, and easily debuggable, aligning with the core design principles of the application."
+  }
+}
