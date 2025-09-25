@@ -9,7 +9,7 @@ import {
   LogOut,
   Settings, 
   Stethoscope,
-  Clock,
+  GitBranch,
   Users,
   FileClock,
 } from 'lucide-react';
@@ -41,7 +41,7 @@ const allMenuItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, role: 'Doctor' },
   { href: '/predict', label: 'Disease Prediction', icon: Stethoscope, role: 'Doctor' },
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, role: 'Doctor' },
-  { href: '/timeline', label: 'Patient Timeline', icon: Clock, role: 'Doctor' },
+  { href: '/timeline', label: 'Patient Timeline', icon: GitBranch, role: 'Doctor' },
   { href: '/collaboration', label: 'Collaboration', icon: Users, role: 'Doctor' },
   // Admin Menu Items
   { href: '/admin', label: 'Doctor Management', icon: Users, role: 'Admin' },
@@ -56,12 +56,20 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    router.push('/login');
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "Could not log out at this time.",
+      });
+    }
   };
   
   if (!user) {
