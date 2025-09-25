@@ -35,10 +35,6 @@ import {
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 
-// Initialize Firebase services
-const { firestore, auth: firebaseAuth } = initializeFirebase();
-
-
 // Schemas for Input
 const LoginInputSchema = z.object({
   email: z.string().email(),
@@ -165,6 +161,7 @@ const loginFlow = ai.defineFlow(
   },
   async (input) => {
     try {
+        const { firestore, auth: firebaseAuth } = initializeFirebase();
         const userCredential = await signInWithEmailAndPassword(firebaseAuth, input.email, input.password);
         const user = userCredential.user;
 
@@ -205,6 +202,7 @@ const signupFlow = ai.defineFlow(
   },
   async (input) => {
      try {
+        const { firestore, auth: firebaseAuth, firebaseApp } = initializeFirebase();
         // Check if hospital exists
         const hospitalRef = doc(firestore, 'hospitals', input.hospitalId);
         const hospitalDoc = await getDoc(hospitalRef);
@@ -215,8 +213,7 @@ const signupFlow = ai.defineFlow(
 
         // We create the user in Firebase Auth but don't sign them in.
         // We'll use a temporary, secondary Firebase app instance for this to avoid affecting the main app's auth state.
-        const tempApp = initializeFirebase().firebaseApp;
-        const tempAuth = getAuth(tempApp);
+        const tempAuth = getAuth(firebaseApp);
         const userCredential = await createUserWithEmailAndPassword(tempAuth, input.email, input.password);
         const user = userCredential.user;
         
@@ -235,7 +232,7 @@ const signupFlow = ai.defineFlow(
         // Create user document in Firestore
         await setDoc(doc(firestore, "users", user.uid), newUser);
 
-        return { success: true, message: 'Your request has been sent to the hospital administrator for approval. You will be notified upon approval.' };
+        return { success: true, message: 'Your request for access has been submitted for administrative review. You can try logging in later after approval.' };
     } catch (error: any) {
          console.error("Firebase signup error:", error);
          if (error.code === 'auth/email-already-in-use') {
@@ -255,6 +252,7 @@ const registerHospitalFlow = ai.defineFlow(
     },
     async (input) => {
         try {
+            const { firestore, auth: firebaseAuth } = initializeFirebase();
             // Check if hospital name is unique
             const hospitalsQuery = query(collection(firestore, 'hospitals'), where('name', '==', input.hospitalName));
             const existingHospitals = await getDocs(hospitalsQuery);
@@ -312,6 +310,7 @@ const getAllDoctorsFlow = ai.defineFlow(
     },
     async ({ adminUserId }) => {
         try {
+            const { firestore } = initializeFirebase();
             const adminDocRef = doc(firestore, 'users', adminUserId);
             const adminDoc = await getDoc(adminDocRef);
 
@@ -343,6 +342,7 @@ const approveDoctorFlow = ai.defineFlow(
     },
     async ({ userId }) => {
        try {
+            const { firestore } = initializeFirebase();
             const userDocRef = doc(firestore, 'users', userId);
             await updateDoc(userDocRef, { status: 'approved' });
             console.log(`Doctor ${userId} approved.`);
@@ -363,6 +363,7 @@ const rejectDoctorFlow = ai.defineFlow(
     },
     async ({ userId }) => {
          try {
+            const { firestore } = initializeFirebase();
             const userDocRef = doc(firestore, 'users', userId);
             await updateDoc(userDocRef, { status: 'rejected' });
             console.log(`Doctor ${userId} rejected.`);
@@ -383,6 +384,7 @@ const suspendDoctorFlow = ai.defineFlow(
     },
     async ({ userId }) => {
         try {
+            const { firestore } = initializeFirebase();
             const userDocRef = doc(firestore, 'users', userId);
             await updateDoc(userDocRef, { status: 'suspended' });
             console.log(`Doctor ${userId} suspended.`);
@@ -404,6 +406,7 @@ const forgotPasswordFlow = ai.defineFlow(
     },
     async (input) => {
         try {
+            const { auth: firebaseAuth } = initializeFirebase();
             await sendPasswordResetEmail(firebaseAuth, input.email);
             return { success: true, message: "If a user with that email exists, a reset link has been sent." };
         } catch (error: any) {
@@ -422,6 +425,7 @@ const logoutFlow = ai.defineFlow(
     },
     async () => {
         try {
+            const { auth: firebaseAuth } = initializeFirebase();
             await signOut(firebaseAuth);
             return { success: true, message: 'Logout successful' };
         } catch (error: any) {
@@ -430,3 +434,5 @@ const logoutFlow = ai.defineFlow(
         }
     }
 );
+
+    
