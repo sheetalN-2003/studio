@@ -13,9 +13,7 @@ import 'server-only';
  */
 
 import { z } from 'zod';
-import { initializeServerSideFirebase } from '@/firebase/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { auth, firestore } from '@/firebase/server';
 
 // Schemas for Input
 const LoginInputSchema = z.object({
@@ -102,8 +100,10 @@ export async function login(input: z.infer<typeof LoginInputSchema>): Promise<Om
     // Note: This function can't fully log a user in from the server side with the client-side SDK.
     // A proper implementation would use custom tokens.
     // For this prototype, we'll just validate the user exists and is approved.
+    if (!auth || !firestore) {
+        return { success: false, message: 'Authentication service not available.' };
+    }
     try {
-        const { auth, firestore } = initializeServerSideFirebase();
         const userRecord = await auth.getUserByEmail(input.email);
 
         if (!userRecord.emailVerified) {
@@ -134,9 +134,10 @@ export async function login(input: z.infer<typeof LoginInputSchema>): Promise<Om
 }
 
 export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
+  if (!auth || !firestore) {
+    return { success: false, message: 'Authentication service not available.' };
+  }
   try {
-        const { auth, firestore } = initializeServerSideFirebase();
-
         const hospitalRef = firestore.collection('hospitals').doc(input.hospitalId);
         const hospitalDoc = await hospitalRef.get();
 
@@ -180,9 +181,10 @@ export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<
 }
 
 export async function registerHospital(input: z.infer<typeof RegisterHospitalInputSchema>): Promise<AuthOutput> {
+    if (!auth || !firestore) {
+        return { success: false, message: 'Authentication service not available.' };
+    }
     try {
-        const { auth, firestore } = initializeServerSideFirebase();
-        
         const hospitalsQuery = firestore.collection('hospitals').where('name', '==', input.hospitalName);
         const existingHospitals = await hospitalsQuery.get();
         if (!existingHospitals.empty) {
@@ -235,8 +237,10 @@ export async function registerHospital(input: z.infer<typeof RegisterHospitalInp
 }
 
 export async function getAllDoctorsForAdmin(adminUserId: string): Promise<AllDoctorsOutputSchema> {
+    if (!firestore) {
+        return { doctors: [] };
+    }
     try {
-        const { firestore } = initializeServerSideFirebase();
         const adminDocRef = firestore.collection('users').doc(adminUserId);
         const adminDoc = await adminDocRef.get();
 
@@ -258,8 +262,10 @@ export async function getAllDoctorsForAdmin(adminUserId: string): Promise<AllDoc
 }
 
 export async function approveDoctor(input: z.infer<typeof ApproveDoctorInputSchema>): Promise<{success: boolean}> {
+    if (!firestore) {
+        return { success: false };
+    }
     try {
-        const { firestore } = initializeServerSideFirebase();
         const userDocRef = firestore.collection('users').doc(input.userId);
         await userDocRef.update({ status: 'approved' });
         console.log(`Doctor ${input.userId} approved.`);
@@ -271,8 +277,10 @@ export async function approveDoctor(input: z.infer<typeof ApproveDoctorInputSche
 }
 
 export async function rejectDoctor(input: z.infer<typeof RejectDoctorInputSchema>): Promise<{success: boolean}> {
+    if (!firestore) {
+        return { success: false };
+    }
     try {
-        const { firestore } = initializeServerSideFirebase();
         const userDocRef = firestore.collection('users').doc(input.userId);
         await userDocRef.update({ status: 'rejected' });
         console.log(`Doctor ${input.userId} rejected.`);
@@ -284,8 +292,10 @@ export async function rejectDoctor(input: z.infer<typeof RejectDoctorInputSchema
 }
 
 export async function suspendDoctor(input: z.infer<typeof SuspendDoctorInputSchema>): Promise<{success: boolean}> {
+    if (!firestore) {
+        return { success: false };
+    }
     try {
-        const { firestore } = initializeServerSideFirebase();
         const userDocRef = firestore.collection('users').doc(input.userId);
         await userDocRef.update({ status: 'suspended' });
         console.log(`Doctor ${input.userId} suspended.`);
