@@ -23,35 +23,25 @@ const ChatMessageOutputSchema = z.object({
 });
 
 export async function sendMessage(input: z.infer<typeof ChatMessageInputSchema>): Promise<z.infer<typeof ChatMessageOutputSchema>> {
-  return sendMessageFlow(input);
-}
+  const { caseId, user, content } = input;
+  try {
+    const { firestore } = initializeFirebase();
+    const messagesColRef = collection(firestore, 'cases', caseId, 'messages');
+    
+    const docRef = await addDoc(messagesColRef, {
+      content,
+      timestamp: serverTimestamp(),
+      user: {
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar,
+        role: user.role,
+      },
+    });
 
-const sendMessageFlow = ai.defineFlow(
-  {
-    name: 'sendMessageFlow',
-    inputSchema: ChatMessageInputSchema,
-    outputSchema: ChatMessageOutputSchema,
-  },
-  async ({ caseId, user, content }) => {
-    try {
-      const { firestore } = initializeFirebase();
-      const messagesColRef = collection(firestore, 'cases', caseId, 'messages');
-      
-      const docRef = await addDoc(messagesColRef, {
-        content,
-        timestamp: serverTimestamp(),
-        user: {
-          id: user.id,
-          name: user.name,
-          avatar: user.avatar,
-          role: user.role,
-        },
-      });
-
-      return { success: true, messageId: docRef.id };
-    } catch (error) {
-      console.error('Error sending message:', error);
-      return { success: false };
-    }
+    return { success: true, messageId: docRef.id };
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return { success: false };
   }
-);
+}
