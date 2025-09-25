@@ -8,14 +8,13 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Send, Bot, MessageCircle } from "lucide-react";
-import { chat } from "@/ai/flows/chat-flow";
+import { medoraChat } from "@/ai/flows/medora-chat-flow";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 
@@ -42,7 +41,7 @@ export function AiChat() {
 
     try {
       const chatHistory = messages.map(m => ({ role: m.role, content: [{ text: m.content }] }));
-      const result = await chat({ query: input, history: chatHistory, role: user?.role });
+      const result = await medoraChat({ query: input, history: chatHistory, role: user?.role });
       const modelMessage: Message = { role: "model", content: result.response };
       setMessages((prev) => [...prev, modelMessage]);
     } catch (error) {

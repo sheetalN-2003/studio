@@ -276,10 +276,85 @@
         "timestamp",
         "actionType"
       ]
+    },
+    "Case": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Case",
+      "type": "object",
+      "description": "Represents a collaborative case for a patient.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the case."
+        },
+        "patientId": {
+          "type": "string"
+        },
+        "caseTitle": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "lastUpdate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "patientId",
+        "caseTitle"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents a single message in a case chat.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "user": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatar": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "content",
+        "timestamp",
+        "user"
+      ]
     }
   },
   "auth": {
     "providers": [
+      "google.com",
       "password",
       "anonymous"
     ]
@@ -291,7 +366,7 @@
         "definition": {
           "entityName": "Hospital",
           "schema": {
-            "$ref": "#/backend/entities/Hospital"
+            "$ref": "#/entities/Hospital"
           },
           "description": "Stores hospital information. The 'hospitalId' is used as the document ID.",
           "params": [
@@ -307,7 +382,7 @@
         "definition": {
           "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/entities/User"
           },
           "description": "Stores user information. The 'userId' is used as the document ID.",
           "params": [
@@ -323,7 +398,7 @@
         "definition": {
           "entityName": "Patient",
           "schema": {
-            "$ref": "#/backend/entities/Patient"
+            "$ref": "#/entities/Patient"
           },
           "description": "Stores patient data for a specific hospital. Includes denormalized 'hospitalId' for authorization independence.",
           "params": [
@@ -343,7 +418,7 @@
         "definition": {
           "entityName": "Dataset",
           "schema": {
-            "$ref": "#/backend/entities/Dataset"
+            "$ref": "#/entities/Dataset"
           },
           "description": "Stores datasets uploaded to the system. Includes denormalized 'hospitalId' and 'userId' for authorization independence.",
           "params": [
@@ -363,7 +438,7 @@
         "definition": {
           "entityName": "AnalysisJob",
           "schema": {
-            "$ref": "#/backend/entities/AnalysisJob"
+            "$ref": "#/entities/AnalysisJob"
           },
           "description": "Stores analysis jobs associated with a dataset. Includes denormalized 'hospitalId', 'datasetId', and 'userId' for authorization independence.",
           "params": [
@@ -387,7 +462,7 @@
         "definition": {
           "entityName": "FederatedTrainingJob",
           "schema": {
-            "$ref": "#/backend/entities/FederatedTrainingJob"
+            "$ref": "#/entities/FederatedTrainingJob"
           },
           "description": "Stores federated training job information. Includes the 'hospitalIds' array to identify participating hospitals.",
           "params": [
@@ -403,13 +478,49 @@
         "definition": {
           "entityName": "AuditLog",
           "schema": {
-            "$ref": "#/backend/entities/AuditLog"
+            "$ref": "#/entities/AuditLog"
           },
           "description": "Stores audit log entries for actions performed within the system.",
           "params": [
             {
               "name": "auditLogId",
               "description": "The unique identifier for the audit log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/entities/Case"
+          },
+          "description": "Stores information about a specific collaborative case.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cases/{caseId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/entities/ChatMessage"
+          },
+          "description": "Stores chat messages for a specific case.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier for the chat message."
             }
           ]
         }

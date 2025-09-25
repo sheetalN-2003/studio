@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, User, Users } from 'lucide-react';
-import Image from 'next/image';
+import { ArrowRight, Users } from 'lucide-react';
+import Link from 'next/link';
 
 const cases = [
     {
@@ -96,8 +96,10 @@ export default function CollaborationPage() {
                                 </div>
                             </TableCell>
                              <TableCell className="text-right">
-                                <Button variant="outline" size="sm">
-                                    Enter Board <ArrowRight className="ml-2 h-4 w-4" />
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/collaboration/${c.patientId}`}>
+                                        Enter Board <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Link>
                                 </Button>
                             </TableCell>
                         </TableRow>
