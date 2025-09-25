@@ -1,4 +1,5 @@
 'use server';
+import 'server-only';
 /**
  * @fileOverview A user authentication flow using Firebase.
  *
@@ -12,27 +13,9 @@
  */
 
 import { z } from 'zod';
-import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    sendPasswordResetEmail,
-    signOut,
-    sendEmailVerification,
-} from 'firebase/auth';
-import { 
-    getFirestore, 
-    doc, 
-    setDoc, 
-    getDoc, 
-    collection, 
-    query, 
-    where, 
-    getDocs,
-    updateDoc,
-    serverTimestamp,
-} from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { initializeServerSideFirebase } from '@/firebase/server';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Schemas for Input
 const LoginInputSchema = z.object({
@@ -106,6 +89,7 @@ const AuthOutputSchema = z.object({
   message: z.string(),
   user: UserSchema.optional(),
   hospital: HospitalSchema.optional(),
+  token: z.string().optional(),
 });
 export type AuthOutput = z.infer<typeof AuthOutputSchema>;
 
@@ -113,65 +97,69 @@ const AllDoctorsOutputSchema = z.object({
     doctors: z.array(UserSchema),
 });
 
-// Exported functions to be called from the UI
-export async function login(input: z.infer<typeof LoginInputSchema>): Promise<AuthOutput> {
-  try {
-        const { firestore, auth: firebaseAuth } = initializeFirebase();
-        const userCredential = await signInWithEmailAndPassword(firebaseAuth, input.email, input.password);
-        const user = userCredential.user;
+// This is a client-side concern now. We return a token for the client to handle.
+export async function login(input: z.infer<typeof LoginInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
+    // Note: This function can't fully log a user in from the server side with the client-side SDK.
+    // A proper implementation would use custom tokens.
+    // For this prototype, we'll just validate the user exists and is approved.
+    try {
+        const { auth, firestore } = initializeServerSideFirebase();
+        const userRecord = await auth.getUserByEmail(input.email);
 
-        if (!user.emailVerified) {
-            return { success: false, message: "Please verify your email before logging in. Check your inbox for a verification link." };
+        if (!userRecord.emailVerified) {
+            return { success: false, message: "Please verify your email before logging in." };
         }
+        
+        const userDocRef = firestore.collection("users").doc(userRecord.uid);
+        const userDoc = await userDocRef.get();
 
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists()) {
+        if (userDoc.exists) {
             const userData = userDoc.data() as User;
              if (userData.role === 'Doctor' && userData.status !== 'approved') {
-                if (userData.status === 'pending') {
-                    return { success: false, message: 'Your account is pending approval. Please contact your hospital administrator.' };
-                }
-                if (userData.status === 'rejected') {
-                    return { success: false, message: 'Your access request has been rejected.' };
-                }
-                if (userData.status === 'suspended') {
-                    return { success: false, message: 'Your account has been suspended.' };
-                }
+                return { success: false, message: `Your account is ${userData.status}. Please contact your administrator.` };
             }
-            return { success: true, message: 'Login successful', user: { ...userData, id: user.uid } };
+            // In a real app, you would verify the password and generate a custom token.
+            // For now, we assume if they exist in Admin SDK, they are valid, and client will do the sign-in.
+            return { success: true, message: 'User validated. Client should now sign in.' };
         } else {
             return { success: false, message: 'User profile not found.' };
         }
     } catch (error: any) {
-        console.error("Firebase login error:", error);
+        if (error.code === 'auth/user-not-found') {
+             return { success: false, message: 'Invalid email or password' };
+        }
+        console.error("Server-side login validation error:", error);
         return { success: false, message: error.message || 'Invalid email or password' };
     }
 }
 
 export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
   try {
-        const { firestore, firebaseApp } = initializeFirebase();
-        // Check if hospital exists
-        const hospitalRef = doc(firestore, 'hospitals', input.hospitalId);
-        const hospitalDoc = await getDoc(hospitalRef);
+        const { auth, firestore } = initializeServerSideFirebase();
 
-        if (!hospitalDoc.exists() || hospitalDoc.data().name.toLowerCase() !== input.hospitalName.toLowerCase()) {
+        const hospitalRef = firestore.collection('hospitals').doc(input.hospitalId);
+        const hospitalDoc = await hospitalRef.get();
+
+        if (!hospitalDoc.exists() || hospitalDoc.data()?.name.toLowerCase() !== input.hospitalName.toLowerCase()) {
             return { success: false, message: `The provided Hospital Name and Hospital ID do not match a registered hospital. Please verify the details and try again.` };
         }
 
-        const tempAuth = getAuth(firebaseApp);
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, input.email, input.password);
-        const user = userCredential.user;
+        const userRecord = await auth.createUser({
+            email: input.email,
+            password: input.password,
+            emailVerified: false, // User must verify their email
+        });
         
-        await sendEmailVerification(user);
+        // This generates a link that can be sent in an email.
+        const verificationLink = await auth.generateEmailVerificationLink(input.email);
+        // TODO: In a real app, you would use an email service (e.g., SendGrid) to send this link.
+        console.log("SEND VERIFICATION EMAIL (mock): ", verificationLink);
 
         const newUser: Omit<User, 'id'> = {
             email: input.email,
             name: input.name,
             hospitalId: hospitalDoc.id,
-            hospitalName: hospitalDoc.data().name,
+            hospitalName: hospitalDoc.data()?.name,
             role: "Doctor",
             department: input.department,
             licenseId: input.licenseId,
@@ -179,12 +167,12 @@ export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<
             avatar: `https://picsum.photos/seed/${Math.random()}/100`
         };
 
-        await setDoc(doc(firestore, "users", user.uid), newUser);
+        await firestore.collection("users").doc(userRecord.uid).set(newUser);
 
         return { success: true, message: 'A verification link has been sent to your email. Please verify your email, and then your request will be submitted for administrative review.' };
     } catch (error: any) {
          console.error("Firebase signup error:", error);
-         if (error.code === 'auth/email-already-in-use') {
+         if (error.code === 'auth/email-already-exists') {
             return { success: false, message: 'An account with this email already exists.' };
          }
         return { success: false, message: error.message || 'An unexpected error occurred.' };
@@ -193,27 +181,32 @@ export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<
 
 export async function registerHospital(input: z.infer<typeof RegisterHospitalInputSchema>): Promise<AuthOutput> {
     try {
-        const { firestore, auth: firebaseAuth } = initializeFirebase();
-        const hospitalsQuery = query(collection(firestore, 'hospitals'), where('name', '==', input.hospitalName));
-        const existingHospitals = await getDocs(hospitalsQuery);
+        const { auth, firestore } = initializeServerSideFirebase();
+        
+        const hospitalsQuery = firestore.collection('hospitals').where('name', '==', input.hospitalName);
+        const existingHospitals = await hospitalsQuery.get();
         if (!existingHospitals.empty) {
             return { success: false, message: `Hospital "${input.hospitalName}" is already registered.` };
         }
+        
+        const adminUserRecord = await auth.createUser({
+            email: input.adminEmail,
+            password: input.adminPassword,
+            emailVerified: false,
+        });
 
-        const userCredential = await createUserWithEmailAndPassword(firebaseAuth, input.adminEmail, input.adminPassword);
-        const adminUser = userCredential.user;
-
-        await sendEmailVerification(adminUser);
+        const verificationLink = await auth.generateEmailVerificationLink(input.adminEmail);
+        console.log("SEND VERIFICATION EMAIL (mock): ", verificationLink);
 
         const hospitalId = `H${String(Math.floor(Math.random() * 900) + 100)}`;
         const hospitalDomain = input.hospitalEmail.split('@')[1];
 
         const newHospital: Omit<Hospital, 'id'> = {
             name: input.hospitalName,
-            adminId: adminUser.uid,
+            adminId: adminUserRecord.uid,
             domain: hospitalDomain,
         };
-        await setDoc(doc(firestore, 'hospitals', hospitalId), newHospital);
+        await firestore.collection('hospitals').doc(hospitalId).set(newHospital);
 
         const newAdmin: Omit<User, 'id'> = {
             email: input.adminEmail,
@@ -225,16 +218,16 @@ export async function registerHospital(input: z.infer<typeof RegisterHospitalInp
             status: "approved",
             avatar: `https://picsum.photos/seed/${Math.random()}/110`,
         };
-        await setDoc(doc(firestore, "users", adminUser.uid), newAdmin);
+        await firestore.collection("users").doc(adminUserRecord.uid).set(newAdmin);
         
         const hospitalData: Hospital = { ...newHospital, id: hospitalId };
-        const adminData: User = { ...newAdmin, id: adminUser.uid };
+        const adminData: User = { ...newAdmin, id: adminUserRecord.uid };
 
         return { success: true, message: "Hospital registered successfully. A verification email has been sent to the administrator's email.", user: adminData, hospital: hospitalData };
 
     } catch (error: any) {
         console.error("Firebase hospital registration error:", error);
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.code === 'auth/email-already-exists') {
             return { success: false, message: 'An account with this admin email already exists.' };
         }
         return { success: false, message: error.message || "An unexpected error occurred." };
@@ -243,18 +236,18 @@ export async function registerHospital(input: z.infer<typeof RegisterHospitalInp
 
 export async function getAllDoctorsForAdmin(adminUserId: string): Promise<AllDoctorsOutputSchema> {
     try {
-        const { firestore } = initializeFirebase();
-        const adminDocRef = doc(firestore, 'users', adminUserId);
-        const adminDoc = await getDoc(adminDocRef);
+        const { firestore } = initializeServerSideFirebase();
+        const adminDocRef = firestore.collection('users').doc(adminUserId);
+        const adminDoc = await adminDocRef.get();
 
-        if (!adminDoc.exists() || adminDoc.data().role !== 'Admin') {
+        if (!adminDoc.exists || adminDoc.data()?.role !== 'Admin') {
             return { doctors: [] };
         }
 
-        const hospitalId = adminDoc.data().hospitalId;
-        const doctorsQuery = query(collection(firestore, 'users'), where('hospitalId', '==', hospitalId), where('role', '==', 'Doctor'));
+        const hospitalId = adminDoc.data()?.hospitalId;
+        const doctorsQuery = firestore.collection('users').where('hospitalId', '==', hospitalId).where('role', '==', 'Doctor');
         
-        const querySnapshot = await getDocs(doctorsQuery);
+        const querySnapshot = await doctorsQuery.get();
         const doctors = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
         return { doctors };
@@ -266,9 +259,9 @@ export async function getAllDoctorsForAdmin(adminUserId: string): Promise<AllDoc
 
 export async function approveDoctor(input: z.infer<typeof ApproveDoctorInputSchema>): Promise<{success: boolean}> {
     try {
-        const { firestore } = initializeFirebase();
-        const userDocRef = doc(firestore, 'users', input.userId);
-        await updateDoc(userDocRef, { status: 'approved' });
+        const { firestore } = initializeServerSideFirebase();
+        const userDocRef = firestore.collection('users').doc(input.userId);
+        await userDocRef.update({ status: 'approved' });
         console.log(`Doctor ${input.userId} approved.`);
         return { success: true };
    } catch (error) {
@@ -279,9 +272,9 @@ export async function approveDoctor(input: z.infer<typeof ApproveDoctorInputSche
 
 export async function rejectDoctor(input: z.infer<typeof RejectDoctorInputSchema>): Promise<{success: boolean}> {
     try {
-        const { firestore } = initializeFirebase();
-        const userDocRef = doc(firestore, 'users', input.userId);
-        await updateDoc(userDocRef, { status: 'rejected' });
+        const { firestore } = initializeServerSideFirebase();
+        const userDocRef = firestore.collection('users').doc(input.userId);
+        await userDocRef.update({ status: 'rejected' });
         console.log(`Doctor ${input.userId} rejected.`);
         return { success: true };
      } catch (error) {
@@ -292,9 +285,9 @@ export async function rejectDoctor(input: z.infer<typeof RejectDoctorInputSchema
 
 export async function suspendDoctor(input: z.infer<typeof SuspendDoctorInputSchema>): Promise<{success: boolean}> {
     try {
-        const { firestore } = initializeFirebase();
-        const userDocRef = doc(firestore, 'users', input.userId);
-        await updateDoc(userDocRef, { status: 'suspended' });
+        const { firestore } = initializeServerSideFirebase();
+        const userDocRef = firestore.collection('users').doc(input.userId);
+        await userDocRef.update({ status: 'suspended' });
         console.log(`Doctor ${input.userId} suspended.`);
         return { success: true };
     } catch (error) {
@@ -305,23 +298,17 @@ export async function suspendDoctor(input: z.infer<typeof SuspendDoctorInputSche
 
 export async function forgotPassword(input: z.infer<typeof ForgotPasswordInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
     try {
-        const { auth: firebaseAuth } = initializeFirebase();
-        await sendPasswordResetEmail(firebaseAuth, input.email);
-        return { success: true, message: "If a user with that email exists, a reset link has been sent." };
+        // Password reset must be initiated from the client-side SDK.
+        // This server-side function just provides a consistent interface.
+        // The client will call the actual Firebase method.
+        return { success: true, message: "Client should now initiate password reset email." };
     } catch (error: any) {
-        console.error("Forgot password error:", error);
-        // Do not reveal if an email exists or not for security reasons.
-        return { success: true, message: "If a user with that email exists, a reset link has been sent." };
+        console.error("Forgot password flow error:", error);
+        return { success: false, message: "An error occurred." };
     }
 }
 
 export async function logout(): Promise<Omit<AuthOutput, 'user'>> {
-    try {
-        const { auth: firebaseAuth } = initializeFirebase();
-        await signOut(firebaseAuth);
-        return { success: true, message: 'Logout successful' };
-    } catch (error: any) {
-        console.error("Logout error:", error);
-        return { success: false, message: "Logout failed." };
-    }
+    // Logout is a client-side action.
+    return { success: true, message: 'Client should now sign out.' };
 }

@@ -9,7 +9,6 @@ import { getDoc, doc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
-  // login is now handled by onAuthStateChanged
   logout: () => void;
   isLoading: boolean;
 }
@@ -25,20 +24,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleAuthChange = async () => {
-      if (isUserLoading) return; // Wait for firebase user state to be determined
+      if (isUserLoading) return;
 
       if (firebaseUser && firestore) {
-        // User is logged in according to Firebase, now fetch our custom profile
-        const userDocRef = doc(firestore, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUser({ id: userDoc.id, ...userDoc.data() } as User);
-        } else {
-          // Profile doesn't exist, maybe an error state?
-          setUser(null);
+        try {
+            const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              const userData = userDoc.data() as Omit<User, 'id'>;
+
+              // Check for account status
+              if (userData.role === 'Doctor' && userData.status !== 'approved') {
+                 if (auth) await auth.signOut(); // Force sign out if not approved
+                 setUser(null);
+              } else {
+                 setUser({ id: userDoc.id, ...userData });
+              }
+            } else {
+              if (auth) await auth.signOut(); // Profile doesn't exist, sign out
+              setUser(null);
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            if (auth) await auth.signOut();
+            setUser(null);
         }
       } else {
-        // No firebase user, so no app user
         setUser(null);
       }
       setIsLoading(false);
@@ -46,12 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     handleAuthChange();
 
-  }, [firebaseUser, isUserLoading, firestore]);
+  }, [firebaseUser, isUserLoading, firestore, auth]);
 
   const logout = useCallback(async () => {
     if (auth) {
       await auth.signOut();
-      setUser(null); // Clear local user state
+      setUser(null);
       if (pathname !== '/login') {
         router.replace('/login');
       }

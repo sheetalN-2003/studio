@@ -28,7 +28,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { login } from "@/ai/flows/user-auth-flow";
-import { useAuth } from '@/context/auth-context';
+import { useAuth as useFirebaseAuth } from '@/context/auth-context';
+import { useFirebase } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 
 const formSchema = z.object({
@@ -40,7 +42,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
+  const { auth: firebaseAuth } = useFirebase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,31 +56,38 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const result = await login(values);
-      if (result.success && result.user) {
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${result.user.name}!`,
-        });
-        // The AuthProvider and AuthGuard will handle the redirect
-        if (result.user.role === 'Admin') {
-            router.push('/admin');
-        } else {
-            router.push('/');
-        }
-      } else {
+      // Step 1: Validate user status on the server
+      const serverResult = await login(values);
+
+      if (!serverResult.success) {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: result.message,
+          description: serverResult.message,
         });
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
+
+      // Step 2: If server validation passes, sign in on the client
+      const userCredential = await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
+      
+      // The onAuthStateChanged listener in AuthProvider will handle the redirect
+      toast({
+        title: "Login Successful",
+        description: `Welcome back!`,
+      });
+
+    } catch (error: any) {
       console.error("Login failed:", error);
+      let message = "An unexpected error occurred. Please try again.";
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          message = "Invalid email or password.";
+      }
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: message,
       });
     } finally {
       setIsLoading(false);

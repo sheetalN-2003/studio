@@ -25,7 +25,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/icons";
-import { forgotPassword } from "@/ai/flows/user-auth-flow";
+import { useFirebase } from "@/firebase";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -35,6 +36,7 @@ export default function ForgotPasswordPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const { auth } = useFirebase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,23 +48,12 @@ export default function ForgotPasswordPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const result = await forgotPassword(values);
-      if (result.success) {
-        setIsSuccess(true);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.message,
-        });
-      }
+      await sendPasswordResetEmail(auth, values.email);
+      setIsSuccess(true);
     } catch (error) {
       console.error("Forgot password failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-      });
+      // For security, we show the same message even if the user doesn't exist.
+      setIsSuccess(true);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +70,7 @@ export default function ForgotPasswordPage() {
                 <CardHeader>
                 <CardTitle className="text-2xl">Check your email</CardTitle>
                 <CardDescription>
-                    We&apos;ve sent a password reset link to your email address.
+                    If an account exists for your email, we&apos;ve sent a password reset link.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,12 +1,13 @@
 'use server';
+import 'server-only';
 
 /**
  * @fileOverview A flow for handling chat messages within a case board.
  *
  * - sendMessage - A function that saves a chat message to Firestore.
  */
-import { initializeFirebase } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { initializeServerSideFirebase } from '@/firebase/server';
+import { serverTimestamp } from 'firebase/firestore';
 import { z } from 'zod';
 import type { User } from './user-auth-flow';
 
@@ -24,10 +25,10 @@ const ChatMessageOutputSchema = z.object({
 export async function sendMessage(input: z.infer<typeof ChatMessageInputSchema>): Promise<z.infer<typeof ChatMessageOutputSchema>> {
   const { caseId, user, content } = input;
   try {
-    const { firestore } = initializeFirebase();
-    const messagesColRef = collection(firestore, 'cases', caseId, 'messages');
+    const { firestore } = initializeServerSideFirebase();
+    const messagesColRef = firestore.collection('cases').doc(caseId).collection('messages');
     
-    const docRef = await addDoc(messagesColRef, {
+    const docRef = await messagesColRef.add({
       content,
       timestamp: serverTimestamp(),
       user: {
