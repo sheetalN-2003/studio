@@ -1,4 +1,5 @@
 'use server';
+import 'server-only';
 // disease-prediction.ts
 
 /**
@@ -147,5 +148,3 @@ const diseasePredictionFlow = ai.defineFlow(
     };
   }
 );
-
-    

@@ -1,4 +1,5 @@
 'use server';
+import 'server-only';
 /**
  * @fileOverview A flow for handling chat messages within a case board.
  *
@@ -54,5 +55,3 @@ const sendMessageFlow = ai.defineFlow(
     }
   }
 );
-
-    

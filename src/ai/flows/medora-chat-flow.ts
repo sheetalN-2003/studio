@@ -1,4 +1,5 @@
 'use server';
+import 'server-only';
 /**
  * @fileOverview An AI agent for answering user queries.
  *
@@ -57,5 +58,3 @@ Do not answer questions outside the scope of platform administration.`;
 
   return {response: llmResponse.text};
 }
-
-    

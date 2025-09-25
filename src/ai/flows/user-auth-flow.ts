@@ -1,4 +1,5 @@
 'use server';
+import 'server-only';
 /**
  * @fileOverview A user authentication flow using Firebase.
  *
@@ -444,5 +445,3 @@ const logoutFlow = ai.defineFlow(
         }
     }
 );
-
-    
