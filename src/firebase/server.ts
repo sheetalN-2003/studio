@@ -5,19 +5,16 @@ import admin from 'firebase-admin';
 function initializeServerSideFirebase() {
   if (!admin.apps.length) {
     try {
-        if(process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            console.log("Initializing Firebase Admin SDK with service account...");
-            admin.initializeApp({
-                credential: admin.credential.applicationDefault(),
-                projectId: 'genosym-ai', // Make sure this matches your project ID
-            });
-        } else {
-            console.warn("GOOGLE_APPLICATION_CREDENTIALS not set. Skipping Firebase Admin SDK initialization.");
-            // Return dummy objects or throw an error if this is critical
-            return { auth: null, firestore: null, app: null };
-        }
+        // In a managed environment like App Hosting, the credentials are often
+        // automatically available. We will attempt to initialize directly.
+        admin.initializeApp({
+            projectId: 'genosym-ai',
+        });
+        console.log("Firebase Admin SDK initialized successfully.");
     } catch (e) {
-      console.error('Firebase Admin SDK initialization error', e);
+      console.error('Firebase Admin SDK initialization error. Ensure service account credentials are configured in your environment.', e);
+      // If initialization fails, return null services to prevent the app from crashing.
+      // The auth flow will handle this and show an error to the user.
       return { auth: null, firestore: null, app: null };
     }
   }
@@ -29,5 +26,5 @@ function initializeServerSideFirebase() {
   return { auth, firestore, app };
 }
 
-// Export a function that ensures initialization and returns the services
+// Export the initialized services
 export const { auth, firestore, app } = initializeServerSideFirebase();
