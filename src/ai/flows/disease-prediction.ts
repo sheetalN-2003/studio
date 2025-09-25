@@ -1,6 +1,4 @@
-
 // disease-prediction.ts
-'use server';
 
 /**
  * @fileOverview A rare disease prediction AI agent.
@@ -148,5 +146,3 @@ const diseasePredictionFlow = ai.defineFlow(
     };
   }
 );
-
-    

@@ -1,5 +1,4 @@
 // src/ai/flows/dataset-classification.ts
-'use server';
 /**
  * @fileOverview A dataset classification AI agent.
  *

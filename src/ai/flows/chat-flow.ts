@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview A flow for handling chat messages within a case board.
  *

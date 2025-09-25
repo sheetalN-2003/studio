@@ -1,5 +1,3 @@
-
-'use server';
 /**
  * @fileOverview A user authentication flow using Firebase.
  *

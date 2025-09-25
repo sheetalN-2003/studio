@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview An AI agent for conducting SHAP analysis to explore factors contributing to a rare disease prediction.
  *
