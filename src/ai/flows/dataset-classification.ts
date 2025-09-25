@@ -1,3 +1,4 @@
+'use server';
 // src/ai/flows/dataset-classification.ts
 /**
  * @fileOverview A dataset classification AI agent.
@@ -53,3 +54,5 @@ const datasetClassificationFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

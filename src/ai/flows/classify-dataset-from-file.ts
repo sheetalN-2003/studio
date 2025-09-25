@@ -1,3 +1,4 @@
+'use server';
 /**
  * @fileOverview An AI agent for classifying a dataset from a file (CSV/Excel).
  *
@@ -79,3 +80,5 @@ const classifyDatasetFromFileFlow = ai.defineFlow(
     };
   }
 );
+
+    

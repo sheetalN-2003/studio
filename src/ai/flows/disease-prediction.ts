@@ -1,3 +1,4 @@
+'use server';
 // disease-prediction.ts
 
 /**
@@ -146,3 +147,5 @@ const diseasePredictionFlow = ai.defineFlow(
     };
   }
 );
+
+    

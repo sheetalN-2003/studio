@@ -1,3 +1,4 @@
+'use server';
 /**
  * @fileOverview A user authentication flow using Firebase.
  *
@@ -443,3 +444,5 @@ const logoutFlow = ai.defineFlow(
         }
     }
 );
+
+    

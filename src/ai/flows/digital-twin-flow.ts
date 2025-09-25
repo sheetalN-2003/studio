@@ -1,3 +1,4 @@
+'use server';
 /**
  * @fileOverview An AI agent for running digital twin simulations.
  *
@@ -80,3 +81,5 @@ const digitalTwinFlow = ai.defineFlow(
     };
   }
 );
+
+    
