@@ -12,6 +12,7 @@ import {
   GitBranch,
   Users,
   FileClock,
+  FlaskConical,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -43,6 +44,7 @@ const allMenuItems = [
   { href: '/classify', label: 'Dataset Classification', icon: FolderKanban, role: 'Doctor' },
   { href: '/timeline', label: 'Patient Timeline', icon: GitBranch, role: 'Doctor' },
   { href: '/collaboration', label: 'Collaboration', icon: Users, role: 'Doctor' },
+  { href: '/trials', label: 'Clinical Trials', icon: FlaskConical, role: 'Doctor' },
   // Admin Menu Items
   { href: '/admin', label: 'Doctor Management', icon: Users, role: 'Admin' },
   { href: '/analytics', label: 'Analytics Hub', icon: AreaChart, role: 'Admin' },
