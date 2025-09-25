@@ -207,7 +207,7 @@ const signupFlow = ai.defineFlow(
   },
   async (input) => {
      try {
-        const { firestore, auth: firebaseAuth, firebaseApp } = initializeFirebase();
+        const { firestore, firebaseApp } = initializeFirebase();
         // Check if hospital exists
         const hospitalRef = doc(firestore, 'hospitals', input.hospitalId);
         const hospitalDoc = await getDoc(hospitalRef);
