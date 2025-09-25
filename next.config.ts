@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
       "*.cluster-52r6vzs3ujeoctkkxpjif3x34a.cloudworkstations.dev",
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["*.cluster-52r6vzs3ujeoctkkxpjif3x34a.cloudworkstations.dev"],
+    },
+  },
   images: {
     remotePatterns: [
       {
