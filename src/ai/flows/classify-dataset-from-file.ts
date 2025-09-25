@@ -1,5 +1,5 @@
 'use server';
-import 'server-only';
+
 /**
  * @fileOverview An AI agent for classifying a dataset from a file (CSV/Excel).
  *

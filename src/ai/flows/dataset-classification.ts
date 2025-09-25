@@ -1,5 +1,5 @@
 'use server';
-import 'server-only';
+
 // src/ai/flows/dataset-classification.ts
 /**
  * @fileOverview A dataset classification AI agent.

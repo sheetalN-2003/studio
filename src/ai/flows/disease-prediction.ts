@@ -1,5 +1,5 @@
 'use server';
-import 'server-only';
+
 // disease-prediction.ts
 
 /**

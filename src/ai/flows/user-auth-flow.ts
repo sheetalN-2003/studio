@@ -1,5 +1,4 @@
 'use server';
-import 'server-only';
 /**
  * @fileOverview A user authentication flow using Firebase.
  *
@@ -12,7 +11,6 @@ import 'server-only';
  * - logout - A function that handles user logout.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { 
     getAuth, 
@@ -312,6 +310,7 @@ export async function forgotPassword(input: z.infer<typeof ForgotPasswordInputSc
         return { success: true, message: "If a user with that email exists, a reset link has been sent." };
     } catch (error: any) {
         console.error("Forgot password error:", error);
+        // Do not reveal if an email exists or not for security reasons.
         return { success: true, message: "If a user with that email exists, a reset link has been sent." };
     }
 }

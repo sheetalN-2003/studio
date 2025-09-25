@@ -1,5 +1,5 @@
 'use server';
-import 'server-only';
+
 /**
  * @fileOverview A flow for handling chat messages within a case board.
  *
@@ -8,7 +8,6 @@ import 'server-only';
 import { initializeFirebase } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { z } from 'zod';
-import { ai } from '@/ai/genkit';
 import type { User } from './user-auth-flow';
 
 const ChatMessageInputSchema = z.object({

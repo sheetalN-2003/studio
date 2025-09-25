@@ -1,5 +1,4 @@
 'use server';
-import 'server-only';
 /**
  * @fileOverview An AI agent for answering user queries.
  *
