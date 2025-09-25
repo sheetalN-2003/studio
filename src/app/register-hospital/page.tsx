@@ -62,8 +62,8 @@ export default function RegisterHospitalPage() {
       const result = await registerHospital(values);
       if (result.success && result.user && result.hospital) {
         toast({
-          title: "Registration Successful",
-          description: `Welcome, ${result.user.name}! Your hospital is registered.`,
+          title: "Registration Submitted",
+          description: "Please check the admin's email to verify the account.",
         });
         setRegistrationResult({ user: result.user, hospital: result.hospital });
       } else {
@@ -105,7 +105,7 @@ export default function RegisterHospitalPage() {
                     <PartyPopper className="h-12 w-12 text-primary" />
                     <CardTitle className="text-2xl">Registration Complete!</CardTitle>
                     <CardDescription>
-                        Your hospital is now registered on the GenoSym-AI platform.
+                        Your hospital is now registered. A verification email has been sent to the administrator's email address.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -242,5 +242,3 @@ export default function RegisterHospitalPage() {
     </div>
   );
 }
-
-    

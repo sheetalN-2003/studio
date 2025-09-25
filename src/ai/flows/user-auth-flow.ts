@@ -20,6 +20,7 @@ import {
     signInWithEmailAndPassword, 
     sendPasswordResetEmail,
     signOut,
+    sendEmailVerification,
 } from 'firebase/auth';
 import { 
     getFirestore, 
@@ -165,6 +166,10 @@ const loginFlow = ai.defineFlow(
         const userCredential = await signInWithEmailAndPassword(firebaseAuth, input.email, input.password);
         const user = userCredential.user;
 
+        if (!user.emailVerified) {
+            return { success: false, message: "Please verify your email before logging in. Check your inbox for a verification link." };
+        }
+
         const userDocRef = doc(firestore, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -217,6 +222,9 @@ const signupFlow = ai.defineFlow(
         const userCredential = await createUserWithEmailAndPassword(tempAuth, input.email, input.password);
         const user = userCredential.user;
         
+        // Send verification email
+        await sendEmailVerification(user);
+
         const newUser: Omit<User, 'id'> = {
             email: input.email,
             name: input.name,
@@ -232,7 +240,7 @@ const signupFlow = ai.defineFlow(
         // Create user document in Firestore
         await setDoc(doc(firestore, "users", user.uid), newUser);
 
-        return { success: true, message: 'Your request for access has been submitted for administrative review. You can try logging in later after approval.' };
+        return { success: true, message: 'A verification link has been sent to your email. Please verify your email, and then your request will be submitted for administrative review.' };
     } catch (error: any) {
          console.error("Firebase signup error:", error);
          if (error.code === 'auth/email-already-in-use') {
@@ -263,6 +271,9 @@ const registerHospitalFlow = ai.defineFlow(
             const userCredential = await createUserWithEmailAndPassword(firebaseAuth, input.adminEmail, input.adminPassword);
             const adminUser = userCredential.user;
 
+            // Send verification email
+            await sendEmailVerification(adminUser);
+
             const hospitalId = `H${String(Math.floor(Math.random() * 900) + 100)}`;
             const hospitalDomain = input.hospitalEmail.split('@')[1];
 
@@ -288,7 +299,7 @@ const registerHospitalFlow = ai.defineFlow(
             const hospitalData: Hospital = { ...newHospital, id: hospitalId };
             const adminData: User = { ...newAdmin, id: adminUser.uid };
 
-            return { success: true, message: "Hospital registered successfully.", user: adminData, hospital: hospitalData };
+            return { success: true, message: "Hospital registered successfully. A verification email has been sent to the administrator's email.", user: adminData, hospital: hospitalData };
 
         } catch (error: any) {
             console.error("Firebase hospital registration error:", error);
@@ -434,5 +445,3 @@ const logoutFlow = ai.defineFlow(
         }
     }
 );
-
-    
