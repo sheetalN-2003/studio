@@ -1,9 +1,9 @@
+
 'use server';
-import 'server-only';
+
 /**
  * @fileOverview A user authentication flow using Firebase.
  *
- * - login - A function that handles user login.
  * - signup - A function that handles doctor access requests.
  * - registerHospital - A function that handles new hospital and admin registration.
  * - getPendingRequests - Fetches pending doctor access requests for an admin.
@@ -14,6 +14,8 @@ import 'server-only';
 
 import { z } from 'zod';
 import { auth, firestore } from '@/firebase/server';
+import { useAuth } from '@/context/auth-context';
+
 
 // Schemas for Input
 const LoginInputSchema = z.object({
@@ -95,43 +97,6 @@ const AllDoctorsOutputSchema = z.object({
     doctors: z.array(UserSchema),
 });
 
-// This is a client-side concern now. We return a token for the client to handle.
-export async function login(input: z.infer<typeof LoginInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
-    // Note: This function can't fully log a user in from the server side with the client-side SDK.
-    // A proper implementation would use custom tokens.
-    // For this prototype, we'll just validate the user exists and is approved.
-    if (!auth || !firestore) {
-        return { success: false, message: 'Authentication service not available.' };
-    }
-    try {
-        const userRecord = await auth.getUserByEmail(input.email);
-
-        if (!userRecord.emailVerified) {
-            return { success: false, message: "Please verify your email before logging in." };
-        }
-        
-        const userDocRef = firestore.collection("users").doc(userRecord.uid);
-        const userDoc = await userDocRef.get();
-
-        if (userDoc.exists) {
-            const userData = userDoc.data() as User;
-             if (userData.role === 'Doctor' && userData.status !== 'approved') {
-                return { success: false, message: `Your account is ${userData.status}. Please contact your administrator.` };
-            }
-            // In a real app, you would verify the password and generate a custom token.
-            // For now, we assume if they exist in Admin SDK, they are valid, and client will do the sign-in.
-            return { success: true, message: 'User validated. Client should now sign in.' };
-        } else {
-            return { success: false, message: 'User profile not found.' };
-        }
-    } catch (error: any) {
-        if (error.code === 'auth/user-not-found') {
-             return { success: false, message: 'Invalid email or password' };
-        }
-        console.error("Server-side login validation error:", error);
-        return { success: false, message: error.message || 'Invalid email or password' };
-    }
-}
 
 export async function signup(input: z.infer<typeof SignupInputSchema>): Promise<Omit<AuthOutput, 'user'>> {
   if (!auth || !firestore) {

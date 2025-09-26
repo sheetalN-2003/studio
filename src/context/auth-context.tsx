@@ -11,6 +11,7 @@ interface AuthContextType {
   user: User | null;
   logout: () => void;
   isLoading: boolean;
+  login: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,15 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (userDoc.exists()) {
               const userData = userDoc.data() as Omit<User, 'id'>;
 
-              // Check for account status
+              // Defer status check until user data is fully loaded
               if (userData.role === 'Doctor' && userData.status !== 'approved') {
-                 if (auth) await auth.signOut(); // Force sign out if not approved
+                 if (auth) await auth.signOut();
                  setUser(null);
               } else {
                  setUser({ id: userDoc.id, ...userData });
               }
             } else {
-              if (auth) await auth.signOut(); // Profile doesn't exist, sign out
+              if (auth) await auth.signOut();
               setUser(null);
             }
         } catch (error) {
@@ -69,8 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [auth, router, pathname]);
 
+  const login = (user: User) => {
+    setUser(user);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, logout, isLoading, login }}>
       {children}
     </AuthContext.Provider>
   );

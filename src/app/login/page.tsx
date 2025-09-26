@@ -27,7 +27,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/icons";
-import { login } from "@/ai/flows/user-auth-flow";
 import { useAuth as useFirebaseAuth } from '@/context/auth-context';
 import { useFirebase } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -56,20 +55,6 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      // Step 1: Validate user status on the server
-      const serverResult = await login(values);
-
-      if (!serverResult.success) {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: serverResult.message,
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Step 2: If server validation passes, sign in on the client
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, values.email, values.password);
       
       // The onAuthStateChanged listener in AuthProvider will handle the redirect
@@ -83,6 +68,8 @@ export default function LoginPage() {
       let message = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           message = "Invalid email or password.";
+      } else if (error.code === 'auth/too-many-requests') {
+          message = "Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.";
       }
       toast({
         variant: "destructive",

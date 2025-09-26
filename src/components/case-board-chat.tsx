@@ -1,5 +1,6 @@
+
 "use client";
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,7 +58,8 @@ export function CaseBoardChat({ caseId }: CaseBoardChatProps) {
     setInput("");
 
     try {
-      await sendMessage({
+      // We are not using the result of sendMessage, so we don't need to await it
+      sendMessage({
         caseId: caseId,
         user: user,
         content: messageContent,
