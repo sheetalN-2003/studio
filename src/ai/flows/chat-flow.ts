@@ -1,3 +1,4 @@
+
 'use server';
 import 'server-only';
 
@@ -24,7 +25,7 @@ const ChatMessageOutputSchema = z.object({
 
 export async function sendMessage(input: z.infer<typeof ChatMessageInputSchema>): Promise<z.infer<typeof ChatMessageOutputSchema>> {
   if (!firestore) {
-    return { success: false };
+    throw new Error('Firestore is not initialized on the server.');
   }
   const { caseId, user, content } = input;
   try {
