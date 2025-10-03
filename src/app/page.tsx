@@ -97,7 +97,7 @@ export default function DashboardPage() {
                       <CardDescription>
                       Patients with urgent high-risk scores from recent analyses.
                       </CardDescription>
-                  </CardHeader>
+                  </Header>
                   <CardContent>
                       <HighRiskPatients />
                   </CardContent>
