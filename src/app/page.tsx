@@ -1,7 +1,7 @@
 
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Activity, Users, TestTube2, AlertTriangle, BadgeCheck, Zap } from 'lucide-react';
+import { Users, TestTube2, AlertTriangle, BadgeCheck, Zap } from 'lucide-react';
 import { RecentAnalysis } from '@/components/recent-analysis';
 import { HighRiskPatients } from '@/components/high-risk-patients';
 import { FederatedLearningStatus } from '@/components/federated-learning-status';
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                       <CardTitle className="flex items-center gap-2">
                           <Zap className="h-5 w-5 text-primary" />
                           Federated Learning Hub
-                      </CardTitle>
+                      </Title>
                       <CardDescription>
                       Live training progress of the global collaborative AI model.
                       </CardDescription>
