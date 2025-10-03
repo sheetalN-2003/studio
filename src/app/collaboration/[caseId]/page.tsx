@@ -1,3 +1,4 @@
+
 "use client";
 import { MainLayout } from '@/components/main-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CaseBoardChat } from '@/components/case-board-chat';
 import { Users, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AnnotationCard } from '@/components/annotation-card';
 
 // Mock data, in a real app this would be fetched based on params.caseId
 const caseDetails = {
@@ -27,7 +29,7 @@ export default function CaseBoardPage({ params }: { params: { caseId: string } }
   return (
     <MainLayout pageTitle="Case Board">
         <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Live Discussion</CardTitle>
@@ -37,6 +39,7 @@ export default function CaseBoardPage({ params }: { params: { caseId: string } }
                        <CaseBoardChat caseId={params.caseId} />
                     </CardContent>
                 </Card>
+                 <AnnotationCard />
             </div>
             <div className="space-y-6">
                 <Card>
