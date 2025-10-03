@@ -84,7 +84,7 @@ export default function DashboardPage() {
               <CardTitle>Recent Analysis</CardTitle>
               <CardDescription>
                 An overview of the latest prediction jobs.
-              </CardDescription>
+              </-cardDescription>
             </CardHeader>
             <CardContent>
               <RecentAnalysis />
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                       <CardTitle className="flex items-center gap-2">
                           <Zap className="h-5 w-5 text-primary" />
                           Federated Learning Hub
-                      </Title>
+                      </CardTitle>
                       <CardDescription>
                       Live training progress of the global collaborative AI model.
                       </CardDescription>
