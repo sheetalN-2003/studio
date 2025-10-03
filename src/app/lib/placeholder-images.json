@@ -1,0 +1,14 @@
+{
+    "patientMonitoring1": {
+        "src": "https://picsum.photos/seed/pmonitor1/100/100",
+        "hint": "child face"
+    },
+    "patientMonitoring2": {
+        "src": "https://picsum.photos/seed/pmonitor2/100/100",
+        "hint": "young boy"
+    },
+    "patientMonitoring3": {
+        "src": "https://picsum.photos/seed/pmonitor3/100/100",
+        "hint": "woman portrait"
+    }
+}
