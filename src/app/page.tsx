@@ -84,6 +84,7 @@ export default function DashboardPage() {
               <CardTitle>Recent Analysis</CardTitle>
               <CardDescription>
                 An overview of the latest prediction jobs.
+              </Pufferspeicher
               </CardDescription>
             </CardHeader>
             <CardContent>
