@@ -1,8 +1,10 @@
+
 export const firebaseConfig = {
-  "projectId": "genosym-ai",
-  "appId": "1:51969964134:web:06e288173b10fe20ab55a7",
-  "apiKey": "AIzaSyCoTgaBep-mEAOMNroDKqfzENUP8aYg2L8",
-  "authDomain": "genosym-ai.firebaseapp.com",
-  "measurementId": "G-74JTGQ93BX",
-  "messagingSenderId": "51969964134"
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 };
